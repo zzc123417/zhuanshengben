@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#120a22">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>专升本模拟器 · 10% 上岸</title>
+<title>专升本模拟器 · 1% 上岸</title>
 <style>
 /* ==========================================================================
    专升本模拟器 · 抖音风 H5 小游戏
@@ -558,7 +558,28 @@ body.nofx *, body.nofx *::before, body.nofx *::after {
   transition-duration: 0s !important;
   transition-delay: 0s !important;
 }
-body.nofx .para, body.nofx .option, body.nofx .bubble { opacity: 1; }
+body.nofx .para, body.nofx .option { opacity: 1; }
+
+/* 选后数值变化弹窗 */
+.delta-pop {
+  position: fixed; left: 50%; top: 38%; z-index: 46;
+  min-width: 214px; padding: 14px 20px 12px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(32, 20, 60, .97), rgba(16, 9, 32, .97));
+  border: 1px solid var(--card-line);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .55), 0 0 34px rgba(139, 92, 255, .22);
+  opacity: 0; pointer-events: none;
+  transform: translate(-50%, -50%) scale(.86);
+  transition: opacity .18s ease, transform .26s cubic-bezier(.2, 1.2, .35, 1);
+}
+.delta-pop.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.delta-title { font-size: 10.5px; letter-spacing: .22em; color: var(--dim); text-align: center; margin-bottom: 7px; font-weight: 900; }
+.delta-line { display: flex; justify-content: space-between; gap: 28px; font-size: 14px; font-weight: 900; padding: 4px 2px; border-bottom: 1px dashed rgba(255,255,255,.08); }
+.delta-line:last-child { border-bottom: 0; }
+.delta-line b { font-variant-numeric: tabular-nums; }
+.delta-line.up b { color: var(--green); }
+.delta-line.down b { color: var(--red); }
+.delta-line.flat b { color: var(--dim); }
 
 /* 小屏适配 */
 @media (max-height: 700px) {
@@ -595,7 +616,7 @@ body.nofx .para, body.nofx .option, body.nofx .bubble { opacity: 1; }
     <!-- ================= 开始 ================= -->
     <section class="screen active" id="screen-start">
       <div class="start-inner">
-        <div class="sticker sticker-spin">基础上岸率 10%</div>
+        <div class="sticker sticker-spin">基础上岸率 1%</div>
         <h1 class="title">专升本<span class="title-glow">模拟器</span></h1>
         <p class="sub">10 回合 · 每回合 4 选 1</p>
         <p class="sub2">你的选择会决定：喊「忘本」还是说「忘专失败」</p>
@@ -705,7 +726,7 @@ window.GAME_DATA = {
     money: { name: "资金", icon: "💰" }
   },
   START: { effort: 50, mood: 50, luck: 50, money: 50 },
-  BASE_CHANCE: 10,
+  BASE_CHANCE: 1,
 
   rounds: [
     /* ------------------------------------------------------- 1 ------- */
@@ -870,7 +891,7 @@ window.GAME_DATA = {
     { text: "我头发呢？刚才还在这的。", anim: "panic", emo: "shock" },
     { text: "求你了，让我背两道题。", anim: "facepalm", emo: "sad" },
     { text: "摸鱼一时爽，查分火葬场。", anim: "laugh", emo: "happy" },
-    { text: "点击领取 10% 上岸率（假的）。", anim: "spin", emo: "star" },
+    { text: "点击领取 1% 上岸率（假的）。", anim: "spin", emo: "star" },
     { text: "别看我，我只是一条咸鱼。", anim: "laugh", emo: "smug" }
   ],
 
@@ -909,7 +930,7 @@ window.GAME_DATA = {
 
   /* 战报图/分享文案的固定标语 */
   SLOGANS: [
-    "基础上岸率只有 10%，你能比小专更忘本吗？",
+    "基础上岸率只有 1%，你能比小专更忘本吗？",
     "10 回合，4 选 1，命运掌握在选项里（也没有）。",
     "忘本 or 忘专失败？来试试你的上岸率！",
     "专升本模拟器 · 一个不负责结果的小游戏"
@@ -928,7 +949,7 @@ window.GameAudio = (function () {
   "use strict";
   var ctx = null, master = null, musicGain = null, sfxGain = null;
   var noiseBuf = null, timer = null, step = 0, nextTime = 0, running = false;
-  var muted = false, voiceOn = true, customEl = null, customUrl = null, started = false;
+  var muted = false, voiceOn = true, customEl = null, customUrl = null, localEl = null, started = false;
 
   var BPM = 142, STEP = 60 / BPM / 4; // 16 分音符
   var KICK = [0, 3, 6, 10, 16, 19, 22, 26];
@@ -1044,7 +1065,26 @@ window.GameAudio = (function () {
       step++;
     }
   }
+  /* ------------------------------------------- 内置本地 BGM（可选） */
+  function hasLocalBgm() {
+    return typeof window.LOCAL_BGM === "string" && window.LOCAL_BGM.length > 200;
+  }
+  function ensureLocalBgm() {
+    if (localEl) return localEl;
+    try {
+      localEl = new Audio(window.LOCAL_BGM);
+      localEl.loop = true;
+      localEl.preload = "auto";
+      localEl.volume = muted ? 0 : 0.7;
+    } catch (e) { localEl = null; }
+    return localEl;
+  }
   function startMusic() {
+    if (hasLocalBgm()) {
+      var lel = ensureLocalBgm();
+      if (lel) { try { lel.play(); } catch (e) {} }
+      return;
+    }
     if (!init()) return;
     resume();
     if (customEl) { try { customEl.play(); } catch (e) {} return; }
@@ -1055,6 +1095,7 @@ window.GameAudio = (function () {
   function stopMusic() {
     running = false;
     if (timer) { clearInterval(timer); timer = null; }
+    if (localEl) { try { localEl.pause(); } catch (e) {} }
   }
 
   /* ------------------------------------------------------------- 音效 */
@@ -1116,6 +1157,7 @@ window.GameAudio = (function () {
 
   /* ------------------------------------------------------- 自定义音频 */
   function setCustom(file) {
+    if (localEl) { try { localEl.pause(); } catch (e) {} }
     stopMusic();
     if (customEl) { try { customEl.pause(); } catch (e) {} }
     if (customUrl) { try { URL.revokeObjectURL(customUrl); } catch (e) {} }
@@ -1129,6 +1171,7 @@ window.GameAudio = (function () {
   function clearCustom() {
     if (customEl) { try { customEl.pause(); } catch (e) {} }
     customEl = null; customUrl = null;
+    if (hasLocalBgm()) { if (started) startMusic(); return; }
     if (started) startMusic();
   }
 
@@ -1144,12 +1187,14 @@ window.GameAudio = (function () {
       muted = !muted;
       if (master) master.gain.value = muted ? 0 : 0.8;
       if (customEl) customEl.volume = muted ? 0 : 0.65;
+      if (localEl) localEl.volume = muted ? 0 : 0.7;
       return muted;
     },
     isMuted: function () { return muted; },
     setCustom: setCustom,
     clearCustom: clearCustom,
     hasCustom: function () { return !!customEl; },
+    hasLocalBgm: hasLocalBgm,
     _ctx: function () { return ctx; }
   };
 })();
@@ -1469,6 +1514,12 @@ window.Character = (function () {
     chars.load = C.mount($("load-char"), null);
     chars.result = C.mount($("result-char"), onCharTap);
     bind();
+    if (window.LOCAL_BGM && window.LOCAL_BGM.length > 200) {
+      var impBtn = $("btn-import");
+      if (impBtn) impBtn.textContent = "🎧 换 BGM";
+      var tiny = document.querySelector("#screen-start .tiny");
+      if (tiny) tiny.innerHTML = "BGM：《升本后醒来》 — 上饒天選之子（本地版，仅供本机播放）<br>公开分享页仍使用原创合成伴奏";
+    }
     handleDemoOrAutotest();
   }
 
@@ -1577,11 +1628,9 @@ window.Character = (function () {
       var btn = document.createElement("button");
       btn.className = "option";
       btn.style.animationDelay = (idx * 55) + "ms";
-      var fx = fxHtml(opt.fx);
       btn.innerHTML =
         '<span class="opt-idx">' + (idx + 1) + "</span>" +
-        '<span class="opt-main"><span class="opt-text">' + esc(opt.text) + "</span>" +
-        '<span class="opt-fx">' + fx + "</span></span>" +
+        '<span class="opt-main"><span class="opt-text">' + esc(opt.text) + "</span></span>" +
         '<span class="opt-emoji">' + (opt.emoji || "👉") + "</span>";
       btn.addEventListener("click", function () { chooseOption(idx, btn); });
       els.options.appendChild(btn);
@@ -1623,28 +1672,15 @@ window.Character = (function () {
 
     // 数值结算
     state.picks.push({ round: state.round, idx: idx, opt: opt, emoji: opt.emoji || "👉" });
-    var upKeys = [], downKeys = [];
+    var deltas = [];
     Object.keys(opt.fx).forEach(function (k) {
-      if (!state.stats[k] && state.stats[k] !== 0) return;
+      if (typeof state.stats[k] !== "number") return;
       var before = state.stats[k];
       state.stats[k] = clamp(before + opt.fx[k], 0, 100);
-      var delta = state.stats[k] - before;
-      if (delta > 0) upKeys.push("+" + delta + " " + D.STATS[k].name);
-      else if (delta < 0) downKeys.push(delta + " " + D.STATS[k].name);
-      var chip = document.createElement("div");
-      chip.className = "float-chip " + (delta >= 0 ? "up" : "down");
-      chip.textContent = (delta > 0 ? "+" : "") + delta + " " + D.STATS[k].name;
-      chip.style.left = rand(22, 78) + "%";
-      chip.style.top = rand(45, 60) + "%";
-      els.scene.appendChild(chip);
-      requestAnimationFrame(function () {
-        chip.style.transition = "transform 1s cubic-bezier(.2,.7,.3,1), opacity 1s ease";
-        chip.style.transform = "translateY(-58px)";
-        chip.style.opacity = "0";
-      });
-      setTimeout(function () { chip.remove(); }, 1100);
+      deltas.push({ name: D.STATS[k].name, icon: D.STATS[k].icon, delta: state.stats[k] - before });
     });
     updateStats(true);
+    showDeltaPopup(deltas);
 
     // 场景反馈
     els.scene.classList.remove("hit");
@@ -1700,6 +1736,26 @@ window.Character = (function () {
     }
   }
 
+  /* ------------------------------------------------ 选完弹出数值变化 */
+  function showDeltaPopup(deltas) {
+    var old = document.getElementById("delta-pop");
+    if (old) old.remove();
+    var rows = (deltas || []).map(function (d) {
+      var sign = d.delta > 0 ? "+" : "";
+      var cls = d.delta > 0 ? "up" : (d.delta < 0 ? "down" : "flat");
+      return '<div class="delta-line ' + cls + '"><span>' + d.icon + " " + d.name + "</span><b>" + sign + d.delta + "</b></div>";
+    }).join("");
+    var div = document.createElement("div");
+    div.id = "delta-pop";
+    div.className = "delta-pop";
+    div.innerHTML = '<div class="delta-title">本回合数值变化</div>' + rows;
+    document.getElementById("app").appendChild(div);
+    requestAnimationFrame(function () { div.classList.add("show"); });
+    setTimeout(function () {
+      div.classList.remove("show");
+      setTimeout(function () { div.remove(); }, 280);
+    }, 1500);
+  }
   /* ------------------------------------------------------------ 查分 */
   function showLoading() {
     show("loading");
@@ -1733,11 +1789,11 @@ window.Character = (function () {
   function computeResult() {
     var s = state.stats;
     var raw = D.BASE_CHANCE
-      + (s.effort - 50) * 0.16
-      + (s.mood - 50) * 0.07
-      + (s.luck - 50) * 0.07
-      + (s.money - 50) * 0.03;
-    state.chance = Math.round(clamp(raw, 3, 30) * 10) / 10;
+      + (s.effort - 50) * 0.10
+      + (s.mood - 50) * 0.05
+      + (s.luck - 50) * 0.05
+      + (s.money - 50) * 0.02;
+    state.chance = Math.round(clamp(raw, 0.3, 12) * 10) / 10;
     state.roll = Math.round(Math.random() * 1000) / 10;
     state.win = state.roll < state.chance;
   }
@@ -1836,7 +1892,7 @@ window.Character = (function () {
     g.fillText("专升本模拟器", W / 2, 110);
     g.font = "700 22px system-ui, 'PingFang SC', sans-serif";
     g.fillStyle = "rgba(246,241,255,.72)";
-    g.fillText("10 回合 · 每回合 4 选 1 · 基础上岸率 10%", W / 2, 156);
+    g.fillText("10 回合 · 每回合 4 选 1 · 基础上岸率 1%", W / 2, 156);
 
     // 角色 emoji
     g.font = "190px 'Apple Color Emoji','Segoe UI Emoji',system-ui";
@@ -1887,7 +1943,7 @@ window.Character = (function () {
     // 标语
     g.font = "800 26px system-ui, 'PingFang SC', sans-serif";
     g.fillStyle = "rgba(255,255,255,.9)";
-    g.fillText("基础上岸率只有 10%，", W / 2, 1110);
+    g.fillText("基础上岸率只有 1%，", W / 2, 1110);
     g.fillText("你能比小专更忘本吗？", W / 2, 1150);
 
     // 底部
@@ -1978,7 +2034,7 @@ window.Character = (function () {
     els["sheet-body"].innerHTML =
       "<p>🎯 共 <b>10 个回合</b>，每回合 4 个选项，选 1 个推进。</p>" +
       "<p>📊 每个选项会影响 <b>努力 / 心态 / 运气 / 资金</b> 四项属性，选项上直接标了变化。</p>" +
-      "<p>🎲 最后按「基础上岸率 10% + 属性修正」掷一次骰子，决定你是 <b>忘本</b> 还是 <b>忘专失败</b>。</p>" +
+      "<p>🎲 最后按「基础上岸率 1% + 属性修正」掷一次骰子，决定你是 <b>忘本</b> 还是 <b>忘专失败</b>。</p>" +
       "<p>👆 点一点角色小专，会有惊喜反应；查分阶段记得深呼吸。</p>" +
       "<p>🔊 右上角可以关音效/语音；BGM 是原创合成说唱风伴奏，也可以换成本地 Rap。</p>" +
       "<p>📤 结果页可以生成战报图 / 分享文案，发给朋友看谁更忘本。</p>";
