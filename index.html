@@ -1,0 +1,2093 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<meta name="theme-color" content="#120a22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>专升本模拟器 · 10% 上岸</title>
+<style>
+/* ==========================================================================
+   专升本模拟器 · 抖音风 H5 小游戏
+   移动端优先 / 单文件离线 / 纯 CSS 动画
+   ========================================================================== */
+:root {
+  --bg: #120a22;
+  --bg2: #1b0f33;
+  --pink: #ff5fa2;
+  --purple: #8b5cff;
+  --cyan: #4be1ff;
+  --yellow: #ffd54a;
+  --green: #50e3a4;
+  --red: #ff5b6e;
+  --ink: #f6f1ff;
+  --dim: #b4a8d6;
+  --card: rgba(38, 24, 70, 0.86);
+  --card-line: rgba(255, 255, 255, 0.1);
+  --font: "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --display: "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", system-ui, sans-serif;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--font);
+  color: var(--ink);
+  background:
+    radial-gradient(120% 80% at 10% 0%, #2a1550 0%, transparent 55%),
+    radial-gradient(110% 70% at 100% 8%, #45185a 0%, transparent 50%),
+    radial-gradient(120% 90% at 50% 115%, #0f2d4a 0%, transparent 60%),
+    var(--bg);
+  overflow: hidden;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; opacity: 0.5; z-index: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(circle at 50% 32%, #000 10%, transparent 78%);
+}
+#app {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 4px);
+}
+#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+
+/* ------------------------------------------------------------------ 顶栏 */
+.topbar {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px 6px;
+}
+.logo {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 800; font-size: 15px; letter-spacing: .04em;
+}
+.logo-mark {
+  display: grid; place-items: center;
+  width: 26px; height: 26px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--pink), var(--purple));
+  font-size: 14px; font-weight: 900;
+  box-shadow: 0 4px 14px rgba(255, 95, 162, .4);
+}
+.top-actions { display: flex; gap: 8px; }
+.icon-btn {
+  width: 38px; height: 38px; border-radius: 12px;
+  border: 1px solid var(--card-line);
+  background: rgba(255, 255, 255, .06);
+  color: var(--ink); font-size: 17px; cursor: pointer;
+  transition: transform .15s ease, background .2s ease;
+  backdrop-filter: blur(8px);
+}
+.icon-btn:active { transform: scale(.92); }
+.icon-btn.off { opacity: .42; }
+
+/* ------------------------------------------------------------------ 屏幕 */
+#main { flex: 1; min-height: 0; position: relative; }
+.screen {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  padding: 8px 16px 18px;
+  overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity .32s ease, transform .32s ease, visibility .32s;
+}
+.screen.active { opacity: 1; visibility: visible; pointer-events: auto; transform: none; }
+
+/* ------------------------------------------------------------------ 通用按钮 */
+.btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; border-radius: 16px; padding: 13px 18px;
+  font-family: var(--display); font-weight: 800; font-size: 16px; letter-spacing: .02em;
+  color: #1a0b2e; cursor: pointer; overflow: hidden;
+  background: linear-gradient(180deg, #fff, #efe6ff);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, .22), 0 12px 26px rgba(139, 92, 255, .28);
+  transition: transform .12s ease, box-shadow .12s ease, filter .2s;
+  touch-action: manipulation;
+}
+.btn:active { transform: translateY(3px) scale(.99); box-shadow: 0 2px 0 rgba(0,0,0,.22), 0 6px 16px rgba(139,92,255,.22); }
+.btn.big { width: 100%; padding: 16px 18px; font-size: 18px; border-radius: 18px; }
+.btn.ghost {
+  background: rgba(255, 255, 255, .07); color: var(--ink);
+  border: 1px solid var(--card-line); box-shadow: none; font-weight: 700; font-size: 14px;
+  padding: 11px 14px;
+}
+.btn:disabled { filter: grayscale(.6) brightness(.9); opacity: .55; pointer-events: none; }
+.btn .arrow { transition: transform .2s; }
+.btn:active .arrow { transform: translateX(4px); }
+.pulse { animation: btnPulse 2.2s ease-in-out infinite; }
+@keyframes btnPulse {
+  0%, 100% { box-shadow: 0 6px 0 rgba(0,0,0,.22), 0 12px 26px rgba(139,92,255,.3); }
+  50% { box-shadow: 0 6px 0 rgba(0,0,0,.22), 0 14px 40px rgba(255,95,162,.55); }
+}
+.hidden { display: none !important; }
+
+/* ------------------------------------------------------------------ 开始页 */
+#screen-start { justify-content: center; text-align: center; }
+.start-inner { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; max-width: 100%; padding-bottom: 6px; }
+.sticker {
+  align-self: center;
+  padding: 6px 14px; border-radius: 999px;
+  font-size: 12px; font-weight: 900; letter-spacing: .08em;
+  color: #2a0f33;
+  background: linear-gradient(90deg, var(--yellow), #ffb03a);
+  box-shadow: 0 6px 18px rgba(255, 176, 58, .35);
+  transform: rotate(-3deg);
+}
+.sticker-spin { animation: stickerWobble 2.8s ease-in-out infinite; }
+@keyframes stickerWobble { 0%,100%{ transform: rotate(-3deg);} 50%{ transform: rotate(2deg) scale(1.04);} }
+.title {
+  margin: 8px 0 0; font-family: var(--display); font-weight: 900;
+  font-size: clamp(34px, 9.6vw, 46px); line-height: 1.08; letter-spacing: -.01em;
+  text-shadow: 0 4px 0 rgba(0,0,0,.25);
+}
+.title-glow {
+  background: linear-gradient(180deg, #ffe680 10%, #ff8fb8 55%, #b391ff 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 18px rgba(255, 143, 184, .45));
+}
+.sub { margin: 10px 0 0; font-size: 14px; font-weight: 700; color: var(--dim); letter-spacing: .06em; }
+.sub2 { margin: 2px 0 0; font-size: 12.5px; color: var(--dim); opacity: .85; }
+.char-stage { position: relative; display: grid; place-items: center; width: 190px; height: 200px; margin: 6px auto 2px; }
+.char-stage.small { width: 130px; height: 140px; }
+.char-stage.big { width: 220px; height: 232px; margin: 0 auto; }
+#start-char { width: 180px; height: 190px; }
+.start-row { display: flex; gap: 10px; width: 100%; margin-top: 10px; }
+.start-row .btn { flex: 1; }
+.tiny { margin: 10px 6px 0; font-size: 10.5px; line-height: 1.7; color: var(--dim); opacity: .72; max-width: 100%; overflow-wrap: anywhere; }
+
+/* ------------------------------------------------------------------ 角色 */
+.char-shell { width: 100%; height: 100%; display: grid; place-items: center; will-change: transform; }
+.chibi { width: 100%; height: 100%; overflow: visible; }
+.chibi .shadow { fill: rgba(0, 0, 0, .28); }
+.chibi .face, .chibi .ear { fill: #ffdfc4; }
+.chibi .ear { fill: #ffd2b0; }
+.chibi .hair { fill: #2b2233; }
+.chibi .torso { fill: #5b8cff; }
+.chibi .collar { fill: #eef3ff; }
+.chibi .leg { fill: #34395c; }
+.chibi .shoe { fill: #1c1e2b; }
+.chibi .hand { fill: #ffdfc4; }
+.chibi .arm rect { fill: #5b8cff; }
+.chibi .book { opacity: 0; transition: opacity .2s; }
+.chibi .book rect { fill: #ffd54a; stroke: #d99a17; stroke-width: 2; }
+.chibi .pupil { fill: #2b2233; }
+.chibi .shine { fill: #fff; }
+.chibi .e-sad .line, .chibi .e-happy .line, .chibi .e-cry .line, .chibi .e-closed .line, .chibi .e-half .line {
+  fill: none; stroke: #2b2233; stroke-width: 4; stroke-linecap: round;
+}
+.chibi .eye-normal ellipse.eyew { fill: #fff; stroke: #2b2233; stroke-width: 2.2; }
+.chibi .e-star .star { fill: #ffd54a; stroke: #e39d13; stroke-width: 1.4; }
+.chibi .e-shock circle { fill: #fff; stroke: #2b2233; stroke-width: 3; }
+.chibi .e-shock circle.p { fill: #2b2233; }
+.chibi .e-cry .drop { fill: #7fd2ff; opacity: 0; }
+.chibi .mouth { fill: none; stroke: #7a3a3a; stroke-width: 4.2; stroke-linecap: round; }
+.chibi .mouth-open { fill: #8c3d4a; stroke: none; }
+.chibi .brow { fill: none; stroke: #2b2233; stroke-width: 4; stroke-linecap: round; transition: transform .2s; transform-box: view-box; }
+.chibi .cheek { fill: #ff9db1; opacity: 0; transition: opacity .2s; }
+.chibi .tears { opacity: 0; }
+.chibi .tear { fill: #7fd2ff; }
+.chibi .sweat { opacity: 0; }
+.chibi .sweat path { fill: #9fe3ff; stroke: #4bb8e8; stroke-width: 1.5; }
+.chibi .zzz { opacity: 0; }
+.chibi .zzz text { fill: #b9a8ff; font-weight: 900; font-size: 18px; }
+.chibi .cap { transition: transform .2s; transform-box: view-box; transform-origin: 100px 46px; }
+.chibi .cap-board { fill: #24202c; }
+.chibi .cap-base { fill: #302a3a; }
+.chibi .tassel { fill: none; stroke: #ffd54a; stroke-width: 3.4; stroke-linecap: round; }
+.chibi .tassel-dot { fill: #ffd54a; }
+
+/* 情绪：只显示对应眼/嘴 */
+.chibi .eyes > g, .chibi .mouths > * { display: none; }
+.chibi[data-emo="normal"] .e-normal,
+.chibi[data-emo="determined"] .e-normal,
+.chibi[data-emo="happy"] .e-happy,
+.chibi[data-emo="star"] .e-star,
+.chibi[data-emo="sad"] .e-sad,
+.chibi[data-emo="cry"] .e-cry,
+.chibi[data-emo="shock"] .e-shock,
+.chibi[data-emo="angry"] .e-normal,
+.chibi[data-emo="sleepy"] .e-closed,
+.chibi[data-emo="think"] .e-half,
+.chibi[data-emo="smug"] .e-half,
+.chibi[data-emo="panic"] .e-shock { display: block; }
+.chibi[data-emo="normal"] .m-normal,
+.chibi[data-emo="determined"] .m-flat,
+.chibi[data-emo="happy"] .m-smile,
+.chibi[data-emo="star"] .m-open,
+.chibi[data-emo="sad"] .m-frown,
+.chibi[data-emo="cry"] .m-frown,
+.chibi[data-emo="shock"] .m-open,
+.chibi[data-emo="angry"] .m-frown,
+.chibi[data-emo="sleepy"] .m-open,
+.chibi[data-emo="think"] .m-flat,
+.chibi[data-emo="smug"] .m-smirk,
+.chibi[data-emo="panic"] .m-wavy { display: block; }
+.chibi[data-emo="happy"] .cheek,
+.chibi[data-emo="star"] .cheek,
+.chibi[data-emo="smug"] .cheek { opacity: .85; }
+.chibi[data-emo="cry"] .tears { opacity: 1; }
+.chibi[data-emo="cry"] .tear { animation: tearFall .9s linear infinite; }
+.chibi[data-emo="cry"] .tear.r { animation-delay: .3s; }
+.chibi[data-emo="shock"] .sweat, .chibi[data-emo="panic"] .sweat { opacity: 1; }
+.chibi[data-emo="sleepy"] .zzz { opacity: 1; }
+.chibi[data-emo="sleepy"] .zzz text { animation: zFloat 2.4s ease-in-out infinite; }
+.chibi[data-emo="angry"] .brow.l { transform: rotate(18deg); }
+.chibi[data-emo="angry"] .brow.r { transform: rotate(-18deg); }
+.chibi[data-emo="think"] .brow.l { transform: translateY(-3px) rotate(-8deg); }
+.chibi[data-emo="determined"] .brow.l { transform: rotate(14deg); }
+.chibi[data-emo="determined"] .brow.r { transform: rotate(-14deg); }
+.chibi[data-emo="shock"] .brow.l, .chibi[data-emo="shock"] .brow.r { transform: translateY(-6px); }
+@keyframes tearFall { 0% { opacity: 1; transform: translateY(0);} 80% { opacity: 1; transform: translateY(26px);} 100% { opacity: 0; transform: translateY(34px);} }
+@keyframes zFloat { 0%,100% { opacity: .3; transform: translateY(0);} 50% { opacity: 1; transform: translateY(-8px);} }
+.chibi .e-normal { animation: blink 4.6s infinite; transform-box: view-box; transform-origin: 100px 76px; }
+@keyframes blink { 0%, 94%, 100% { transform: scaleY(1);} 96% { transform: scaleY(.08);} 98% { transform: scaleY(1);} }
+
+/* 动作：挂在 .char-shell[data-anim] 上 */
+.char-shell[data-anim="idle"] .chibi { animation: bob 2.8s ease-in-out infinite; }
+.char-shell[data-anim="hop"] .chibi { animation: hop .56s cubic-bezier(.32,.72,.36,1) infinite; }
+.char-shell[data-anim="celebrate"] .chibi { animation: celebrate .5s ease-in-out infinite; }
+.char-shell[data-anim="droop"] .chibi { animation: droopSway 3.2s ease-in-out infinite; }
+.char-shell[data-anim="shake"] .chibi { animation: shake .3s linear infinite; }
+.char-shell[data-anim="panic"] .chibi { animation: shake .2s linear infinite; }
+.char-shell[data-anim="laugh"] .chibi { animation: laugh .48s ease-in-out infinite; }
+.char-shell[data-anim="sleep"] .chibi { animation: sleepBob 3.6s ease-in-out infinite; }
+.char-shell[data-anim="run"] .chibi { animation: runBob .3s linear infinite; }
+.char-shell[data-anim="spin"] .chibi { animation: spin .85s cubic-bezier(.4,.1,.3,1); }
+.char-shell[data-anim="study"] .book { opacity: 1; }
+.char-shell[data-anim="study"] .arm-l { transform: rotate(-46deg); }
+.char-shell[data-anim="study"] .arm-r { transform: rotate(46deg); }
+.char-shell[data-anim="facepalm"] .arm-r { transform: rotate(142deg) translate(-4px, -8px); }
+.char-shell[data-anim="point"] .arm-r { transform: rotate(-96deg); }
+.char-shell[data-anim="hop"] .arm-l { transform: translate(-8px, -30px) rotate(8deg); }
+.char-shell[data-anim="hop"] .arm-r { transform: translate(8px, -30px) rotate(-8deg); }
+.char-shell[data-anim="celebrate"] .arm-l { transform: translate(-11px, -36px) rotate(14deg); }
+.char-shell[data-anim="celebrate"] .arm-r { transform: translate(11px, -36px) rotate(-14deg); }
+.char-shell[data-anim="laugh"] .arm-l, .char-shell[data-anim="laugh"] .arm-r { transform: rotate(-20deg); }
+.char-shell[data-anim="droop"] .head { transform: translateY(16px) rotate(15deg); }
+.char-shell[data-anim="droop"] .arm-l, .char-shell[data-anim="droop"] .arm-r { transform: rotate(6deg); }
+.char-shell[data-anim="sleep"] .head { transform: translateY(8px) rotate(8deg); }
+.char-shell[data-anim="point"] .head { transform: rotate(-4deg); }
+.char-shell[data-anim="think"] .head { transform: rotate(-7deg); }
+.char-shell[data-anim="think"] .arm-r { transform: rotate(118deg); }
+
+.char-shell .head { transform-box: view-box; transform-origin: 100px 104px; transition: transform .35s cubic-bezier(.2,.8,.3,1.3); }
+.char-shell .arm { transform-box: view-box; transition: transform .3s cubic-bezier(.2,.8,.3,1.3); }
+.char-shell .arm-l { transform-origin: 59px 122px; }
+.char-shell .arm-r { transform-origin: 141px 122px; }
+.char-shell .chibi { transform-origin: 100px 200px; }
+@keyframes bob { 0%,100%{ transform: translateY(0) scale(1);} 50%{ transform: translateY(-4px) scale(1.006);} }
+@keyframes hop {
+  0% { transform: translateY(0) scale(1, 1); }
+  18% { transform: translateY(2px) scale(1.06, .94); }
+  42% { transform: translateY(-34px) scale(.97, 1.03); }
+  62% { transform: translateY(-20px) scale(1, 1); }
+  86% { transform: translateY(1px) scale(1.06, .94); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+@keyframes celebrate {
+  0%, 100% { transform: translateY(0) rotate(-2deg) scale(1); }
+  30% { transform: translateY(-16px) rotate(3deg) scale(1.02); }
+  60% { transform: translateY(-6px) rotate(-3deg); }
+}
+@keyframes droopSway { 0%,100%{ transform: translateY(3px) rotate(0);} 50%{ transform: translateY(5px) rotate(-1.4deg);} }
+@keyframes shake { 0%,100%{ transform: translateX(0);} 25%{ transform: translateX(-5px) rotate(-1deg);} 75%{ transform: translateX(5px) rotate(1deg);} }
+@keyframes laugh { 0%,100%{ transform: translateY(0) scale(1);} 40%{ transform: translateY(-6px) scale(1.02, .98);} 70%{ transform: translateY(0) scale(.99, 1.01);} }
+@keyframes sleepBob { 0%,100%{ transform: translateY(0) rotate(-1deg);} 50%{ transform: translateY(5px) rotate(1deg);} }
+@keyframes runBob { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-3px);} }
+@keyframes spin { 0%{ transform: rotate(0);} 100%{ transform: rotate(360deg);} }
+
+/* ------------------------------------------------------------------ 气泡 */
+.bubble {
+  position: absolute; left: 50%; bottom: calc(100% - 6px);
+  transform: translateX(-50%) scale(.6);
+  min-width: 120px; max-width: 84%;
+  padding: 9px 14px;
+  background: #fff; color: #2a1740;
+  border-radius: 16px; font-size: 14px; font-weight: 800; line-height: 1.4;
+  text-align: center; white-space: pre-wrap;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .35);
+  opacity: 0; pointer-events: none;
+  transition: transform .28s cubic-bezier(.2,1.2,.35,1), opacity .2s;
+  z-index: 6;
+}
+.bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -8px;
+  transform: translateX(-50%);
+  border: 9px solid transparent; border-top-color: #fff; border-bottom: 0;
+}
+.bubble.show { opacity: 1; transform: translateX(-50%) scale(1); }
+.bubble.big { font-size: 20px; padding: 12px 18px; min-width: 150px; }
+.bubble.win { background: #fff8d6; }
+.bubble.lose { background: #eef1ff; }
+
+/* ------------------------------------------------------------------ 游戏页 */
+#screen-game { gap: 10px; }
+.progress { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 800; color: var(--dim); padding: 2px 2px 0; }
+.progress .bar { flex: 1; height: 8px; border-radius: 99px; background: rgba(255,255,255,.09); overflow: hidden; }
+.progress .bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink)); transition: width .4s ease; }
+#round-pct { min-width: 34px; text-align: right; color: var(--cyan); }
+
+.scene {
+  position: relative; height: clamp(190px, 30vh, 250px);
+  border-radius: 24px; overflow: visible;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  box-shadow: inset 0 0 60px rgba(0,0,0,.25), 0 14px 34px rgba(0,0,0,.32);
+  isolation: isolate;
+}
+.scene-bg { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; transition: background .5s ease; z-index: -2; }
+.scene-bg::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(120% 80% at 50% 110%, rgba(255,255,255,.12), transparent 60%);
+}
+.bg-1 { background: linear-gradient(160deg, #2b1a4d, #4a2c6e 55%, #ff8fb8 140%); }
+.bg-2 { background: linear-gradient(160deg, #241a4a, #5a2b5f 55%, #ffc46b 150%); }
+.bg-3 { background: linear-gradient(160deg, #1b2140, #36305e 55%, #4be1ff 160%); }
+.bg-4 { background: linear-gradient(160deg, #3a1b3e, #6e2450 55%, #ff5fa2 150%); }
+.bg-5 { background: linear-gradient(160deg, #2a1c3e, #4a2a52 55%, #ffd54a 160%); }
+.bg-6 { background: linear-gradient(160deg, #1e1a3c, #3f2a63 55%, #8b5cff 160%); }
+.bg-7 { background: linear-gradient(160deg, #2a1a3e, #5f2a52 55%, #ffb3c8 160%); }
+.bg-8 { background: linear-gradient(160deg, #221a44, #2f3a6e 55%, #50e3a4 160%); }
+.bg-9 { background: linear-gradient(160deg, #1a1a38, #33305e 55%, #7f7bff 160%); }
+.bg-10 { background: linear-gradient(160deg, #2a1438, #6b1f4a 55%, #ff5b6e 150%); }
+.floaters { position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit; overflow: hidden; }
+.floater { position: absolute; font-size: 22px; opacity: .5; animation: floatUp 6s linear infinite; filter: drop-shadow(0 4px 10px rgba(0,0,0,.35)); }
+@keyframes floatUp {
+  0% { transform: translateY(40px) rotate(-8deg); opacity: 0; }
+  15% { opacity: .55; }
+  85% { opacity: .45; }
+  100% { transform: translateY(-150px) rotate(10deg); opacity: 0; }
+}
+.scene-emoji {
+  position: absolute; right: 10%; top: 34%;
+  font-size: 54px; opacity: .92; z-index: -1;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
+  animation: propFloat 4.4s ease-in-out infinite;
+}
+@keyframes propFloat { 0%,100%{ transform: translateY(0) rotate(-4deg);} 50%{ transform: translateY(-10px) rotate(4deg);} }
+.scene .char-stage {
+  position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+  width: 150px; height: 158px; margin: 0;
+}
+.scene .bubble { bottom: calc(100% - 56px); }
+
+/* 回合卡 */
+.round-card {
+  padding: 14px 16px; border-radius: 20px;
+  background: var(--card); border: 1px solid var(--card-line);
+  box-shadow: 0 10px 24px rgba(0,0,0,.28);
+}
+.round-kicker { font-size: 10px; font-weight: 900; letter-spacing: .22em; color: var(--pink); }
+.round-card h2 { margin: 4px 0 6px; font-family: var(--display); font-size: 22px; font-weight: 900; letter-spacing: .01em; }
+.round-card p { margin: 0; font-size: 13.5px; line-height: 1.65; color: var(--dim); }
+
+/* 属性 */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.stat {
+  padding: 8px 9px 7px; border-radius: 14px;
+  background: rgba(255,255,255,.055); border: 1px solid var(--card-line);
+  transition: transform .2s ease, background .2s;
+}
+.stat span { display: block; font-size: 10.5px; font-weight: 800; color: var(--dim); }
+.stat b { display: block; font-size: 17px; font-weight: 900; font-variant-numeric: tabular-nums; margin: 1px 0 4px; }
+.stat .mini { height: 5px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; }
+.stat .mini i { display: block; height: 100%; width: 50%; border-radius: 99px; background: linear-gradient(90deg, var(--cyan), var(--purple)); transition: width .45s cubic-bezier(.2,.9,.3,1.2); }
+.stat.up { animation: statUp .5s ease; }
+.stat.down { animation: statDown .5s ease; }
+@keyframes statUp { 0%,100%{ transform: none;} 40%{ transform: translateY(-4px) scale(1.05); background: rgba(80,227,164,.16);} }
+@keyframes statDown { 0%,100%{ transform: none;} 40%{ transform: translateY(3px) scale(.97); background: rgba(255,91,110,.16);} }
+
+/* 选项 */
+.options { display: flex; flex-direction: column; gap: 9px; padding-bottom: 4px; }
+.option {
+  position: relative; display: flex; align-items: center; gap: 11px;
+  width: 100%; padding: 13px 14px;
+  border: 1px solid var(--card-line); border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.045));
+  color: var(--ink); text-align: left; cursor: pointer;
+  font-family: var(--font);
+  transition: transform .12s ease, background .2s, border-color .2s, box-shadow .2s;
+  animation: optionIn .4s cubic-bezier(.2,.9,.3,1.2) both;
+  touch-action: manipulation;
+}
+.option:active { transform: scale(.985); border-color: var(--pink); background: linear-gradient(180deg, rgba(255,95,162,.22), rgba(255,255,255,.06)); }
+.option .opt-idx {
+  flex: 0 0 26px; width: 26px; height: 26px; border-radius: 9px;
+  display: grid; place-items: center;
+  background: rgba(255,255,255,.14); font-size: 12px; font-weight: 900;
+}
+.option .opt-main { flex: 1; min-width: 0; }
+.option .opt-text { display: block; font-size: 14.5px; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
+.option .opt-fx { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.fx-chip { font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 99px; background: rgba(255,255,255,.1); color: var(--dim); }
+.fx-chip.up { color: var(--green); background: rgba(80,227,164,.12); }
+.fx-chip.down { color: var(--red); background: rgba(255,91,110,.12); }
+.option.dimmed { pointer-events: none; opacity: .32; filter: grayscale(.4); }
+.option.chosen { border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(255,213,74,.35), 0 8px 24px rgba(255,213,74,.2); }
+@keyframes optionIn { from { opacity: 0; transform: translateY(12px);} to { opacity: 1; transform: none;} }
+
+.next-btn { margin-top: auto; animation: optionIn .3s ease both; }
+
+/* ------------------------------------------------------------------ 查分页 */
+#screen-loading { justify-content: center; align-items: center; text-align: center; gap: 6px; }
+.loading-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+.load-phone { font-size: 56px; filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)); }
+.shake-phone { animation: phoneShake .5s ease-in-out infinite; }
+@keyframes phoneShake { 0%,100%{ transform: rotate(-4deg) translateY(0);} 50%{ transform: rotate(4deg) translateY(-4px);} }
+#screen-loading h2 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: .04em; }
+.load-bar { width: 78%; height: 12px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; }
+.load-bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--cyan), var(--pink)); transition: width .2s linear; }
+#load-tip { margin: 0; font-size: 13px; color: var(--dim); min-height: 1.4em; }
+#load-char { margin-top: 4px; }
+
+/* ------------------------------------------------------------------ 结果页 */
+#screen-result { padding-top: 4px; }
+.result-flash {
+  position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 30;
+}
+.result-flash.fire { animation: flash .5s ease-out; }
+@keyframes flash { 0%{ opacity: .85;} 100%{ opacity: 0;} }
+.result-inner { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-bottom: 10px; }
+.result-inner h1 { margin: 2px 0 0; font-family: var(--display); font-size: clamp(30px, 8.6vw, 40px); font-weight: 900; text-align: center; line-height: 1.1; }
+.result-inner h1.win { color: #ffe680; text-shadow: 0 0 24px rgba(255,213,74,.5); }
+.result-inner h1.lose { color: #b9c2ff; }
+#result-sub { margin: 0; white-space: pre-line; font-size: 13px; color: var(--dim); text-align: center; line-height: 1.6; max-width: 88%; }
+.result-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; margin-top: 4px; }
+.result-cell {
+  padding: 9px 8px; border-radius: 14px; text-align: center;
+  background: rgba(255,255,255,.06); border: 1px solid var(--card-line);
+}
+.result-cell span { display: block; font-size: 10px; color: var(--dim); font-weight: 800; }
+.result-cell b { display: block; font-size: 16px; font-weight: 900; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.result-cell.hl b { color: var(--yellow); }
+.recap { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.recap-chip {
+  width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center;
+  font-size: 15px; background: rgba(255,255,255,.07); border: 1px solid var(--card-line);
+}
+.result-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 6px; }
+.result-actions .row { display: flex; gap: 8px; }
+.result-actions .row .btn { flex: 1; font-size: 13.5px; padding: 11px 8px; }
+
+/* ------------------------------------------------------------------ toast / sheet */
+.toast {
+  position: fixed; left: 50%; top: 72px; transform: translate(-50%, -16px) scale(.92);
+  padding: 10px 16px; border-radius: 999px;
+  background: rgba(20, 10, 36, .94); color: var(--ink);
+  border: 1px solid var(--card-line); font-size: 13px; font-weight: 800;
+  box-shadow: 0 12px 30px rgba(0,0,0,.4);
+  opacity: 0; pointer-events: none; transition: all .25s cubic-bezier(.2,1.2,.35,1); z-index: 80;
+  max-width: 86%; text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.sheet { position: fixed; inset: 0; z-index: 60; }
+.sheet-mask { position: absolute; inset: 0; background: rgba(6, 2, 14, .72); backdrop-filter: blur(6px); }
+.sheet-card {
+  position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+  width: min(520px, 100%); max-height: 80vh; overflow-y: auto;
+  background: linear-gradient(180deg, #241440, #170d2c);
+  border-radius: 24px 24px 0 0; border: 1px solid var(--card-line); border-bottom: 0;
+  padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
+  animation: sheetUp .3s cubic-bezier(.2,.9,.3,1.1) both;
+}
+@keyframes sheetUp { from { transform: translate(-50%, 30px); opacity: 0;} to { transform: translate(-50%, 0); opacity: 1;} }
+.sheet-card h3 { margin: 0 0 8px; font-size: 18px; font-weight: 900; }
+.sheet-card p { font-size: 13px; line-height: 1.8; color: var(--dim); margin: 6px 0; }
+.sheet-card .btn { margin-top: 10px; width: 100%; }
+.sheet .hidden { display: none; }
+
+/* 粒子 & 浮动文字 */
+.pop-particle { position: fixed; pointer-events: none; z-index: 40; font-weight: 900; will-change: transform, opacity; }
+.float-chip {
+  position: absolute; pointer-events: none; font-weight: 900; font-size: 14px;
+  z-index: 9; will-change: transform, opacity;
+  text-shadow: 0 2px 8px rgba(0,0,0,.45);
+}
+.float-chip.up { color: var(--green); }
+.float-chip.down { color: var(--red); }
+
+/* 场景受击反馈 */
+.scene.hit { animation: sceneHit .38s cubic-bezier(.2,.7,.3,1); }
+@keyframes sceneHit {
+  0% { transform: translate(0,0) rotate(0); }
+  25% { transform: translate(-4px, 2px) rotate(-.4deg); }
+  50% { transform: translate(4px, -2px) rotate(.4deg); }
+  75% { transform: translate(-2px, 1px) rotate(-.2deg); }
+  100% { transform: none; }
+}
+.option .opt-emoji { flex: 0 0 auto; font-size: 18px; opacity: .9; }
+
+/* 结果页的气泡走文档流，避免绝对定位跑位 */
+#screen-result .bubble {
+  position: relative; left: auto; bottom: auto; margin: -6px auto 0;
+  transform: none; opacity: 0; pointer-events: none;
+}
+#screen-result .bubble.show { opacity: 1; animation: bubblePop .42s cubic-bezier(.2,1.2,.35,1) both; }
+#screen-result .bubble { padding: 13px 22px; }
+#screen-result .bubble.win { background: linear-gradient(180deg, #fffbe0, #ffe680); border: 2px solid #ffd54a; color: #6b3a00; font-size: 24px; box-shadow: 0 12px 30px rgba(255,213,74,.35), 0 0 0 5px rgba(255,213,74,.13); }
+#screen-result .bubble.lose { background: linear-gradient(180deg, #f2f4ff, #dfe4ff); border: 2px solid #b9c2ff; color: #3a3f6b; font-size: 21px; box-shadow: 0 12px 30px rgba(120,130,255,.25); }
+#screen-result .bubble.win::after { border-top-color: #ffe680; }
+#screen-result .bubble.lose::after { border-top-color: #dfe4ff; }
+#screen-result .bubble::after { bottom: -8px; }
+@keyframes bubblePop {
+  0% { transform: scale(.6); opacity: 0; }
+  70% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+#screen-result .result-inner { animation: resultIn .5s cubic-bezier(.2,.9,.3,1.05) both; }
+@keyframes resultIn { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
+
+/* 静态截图模式：关闭过渡/动画，避免无头浏览器冻在半途 */
+body.nofx *, body.nofx *::before, body.nofx *::after {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+}
+body.nofx .para, body.nofx .option, body.nofx .bubble { opacity: 1; }
+
+/* 小屏适配 */
+@media (max-height: 700px) {
+  .scene { height: clamp(150px, 24vh, 200px); }
+  .scene .char-stage { width: 124px; height: 132px; }
+  .round-card { padding: 10px 13px; }
+  .round-card h2 { font-size: 19px; }
+  .round-card p { font-size: 12.5px; }
+  .option { padding: 10px 12px; }
+  .option .opt-text { font-size: 13.5px; }
+  .btn.big { padding: 13px 16px; font-size: 16px; }
+  .char-stage.big { width: 170px; height: 180px; }
+  .char-stage { width: 160px; height: 168px; }
+  #start-char { width: 150px; height: 160px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="fx"></canvas>
+  <header class="topbar">
+    <div class="logo"><span class="logo-mark">专</span>专升本模拟器</div>
+    <div class="top-actions">
+      <button id="btn-sound" class="icon-btn" title="音效">🔊</button>
+      <button id="btn-voice" class="icon-btn" title="语音">🗣️</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ================= 开始 ================= -->
+    <section class="screen active" id="screen-start">
+      <div class="start-inner">
+        <div class="sticker sticker-spin">基础上岸率 10%</div>
+        <h1 class="title">专升本<span class="title-glow">模拟器</span></h1>
+        <p class="sub">10 回合 · 每回合 4 选 1</p>
+        <p class="sub2">你的选择会决定：喊「忘本」还是说「忘专失败」</p>
+        <div class="char-stage" id="start-char" data-char></div>
+        <button class="btn big pulse" id="btn-start">开始专升本 <span class="arrow">🚀</span></button>
+        <div class="start-row">
+          <button class="btn ghost" id="btn-import">🎧 换本地 Rap</button>
+          <button class="btn ghost" id="btn-how">❓ 玩法</button>
+        </div>
+        <input type="file" id="file-bgm" accept="audio/*" hidden>
+        <p class="tiny">BGM 是原创合成「说唱风」伴奏：抖音那几首热曲有版权，不能内置；<br>可以点「换本地 Rap」导入你手机里的音频（分享出去的页面仍用默认伴奏）。</p>
+      </div>
+    </section>
+
+    <!-- ================= 游戏 ================= -->
+    <section class="screen" id="screen-game">
+      <div class="progress">
+        <span id="round-label">第 1 / 10 回合</span>
+        <div class="bar"><i id="round-bar"></i></div>
+        <span id="round-pct">0%</span>
+      </div>
+
+      <div class="scene" id="scene">
+        <div class="scene-bg" id="scene-bg"></div>
+        <div class="floaters" id="floaters"></div>
+        <div class="scene-emoji" id="scene-emoji">📚</div>
+        <div class="char-stage" id="game-char" data-char></div>
+        <div class="bubble" id="bubble"></div>
+      </div>
+
+      <div class="round-card" id="round-card">
+        <div class="round-kicker" id="round-kicker">ROUND 1</div>
+        <h2 id="round-title"></h2>
+        <p id="round-desc"></p>
+      </div>
+
+      <div class="stats">
+        <div class="stat" data-stat="effort"><span>💪 努力</span><b>50</b><div class="mini"><i></i></div></div>
+        <div class="stat" data-stat="mood"><span>🧠 心态</span><b>50</b><div class="mini"><i></i></div></div>
+        <div class="stat" data-stat="luck"><span>🍀 运气</span><b>50</b><div class="mini"><i></i></div></div>
+        <div class="stat" data-stat="money"><span>💰 资金</span><b>50</b><div class="mini"><i></i></div></div>
+      </div>
+
+      <div class="options" id="options"></div>
+      <button class="btn big next-btn hidden" id="btn-next">继续 →</button>
+    </section>
+
+    <!-- ================= 查分 ================= -->
+    <section class="screen" id="screen-loading">
+      <div class="loading-wrap">
+        <div class="load-phone shake-phone">📱</div>
+        <h2>查分中…</h2>
+        <div class="load-bar"><i id="load-bar"></i></div>
+        <p id="load-tip">正在连接省教育考试院…</p>
+        <div class="char-stage small" id="load-char" data-char></div>
+        <p class="tiny">请保持网络通畅，以及心脏健康</p>
+      </div>
+    </section>
+
+    <!-- ================= 结果 ================= -->
+    <section class="screen" id="screen-result">
+      <div class="result-flash" id="result-flash"></div>
+      <div class="result-inner" id="result-inner">
+        <div class="char-stage big" id="result-char" data-char></div>
+        <div class="bubble big" id="result-bubble"></div>
+        <h1 id="result-title"></h1>
+        <p id="result-sub"></p>
+        <div class="result-grid" id="result-grid"></div>
+        <div class="recap" id="recap"></div>
+        <div class="result-actions">
+          <button class="btn big" id="btn-again">再战一年 🔁</button>
+          <div class="row">
+            <button class="btn" id="btn-share">📤 分享</button>
+            <button class="btn ghost" id="btn-poster">🖼 战报图</button>
+            <button class="btn ghost" id="btn-copy">📋 文案</button>
+          </div>
+        </div>
+        <p class="tiny">纯娱乐，不构成任何升学建议 · 好运才是本体</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="sheet hidden" id="sheet">
+    <div class="sheet-mask"></div>
+    <div class="sheet-card">
+      <h3 id="sheet-title">玩法</h3>
+      <div id="sheet-body"></div>
+      <button class="btn" id="sheet-close">知道啦</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== data.js ===== */
+/* ==========================================================================
+   专升本模拟器 · 内容数据
+   10 回合 × 每回合 4 选 1；每个选项带：属性变化 / 角色动作 / 角色台词 / recap 表情
+   ========================================================================== */
+window.GAME_DATA = {
+  /* 属性初始值 & 显示名 */
+  STATS: {
+    effort: { name: "努力", icon: "💪" },
+    mood: { name: "心态", icon: "🧠" },
+    luck: { name: "运气", icon: "🍀" },
+    money: { name: "资金", icon: "💰" }
+  },
+  START: { effort: 50, mood: 50, luck: 50, money: 50 },
+  BASE_CHANCE: 10,
+
+  rounds: [
+    /* ------------------------------------------------------- 1 ------- */
+    {
+      kicker: "ROUND 01",
+      title: "早上 6:00 的闹钟",
+      desc: "第五个闹钟正在响。被子外面是冰冷的人间，被窝里面是温柔乡。",
+      emoji: "⏰",
+      bg: "bg-1",
+      floaters: ["📚", "😴", "☕"],
+      options: [
+        { text: "立刻爬起来背单词", fx: { effort: 8, mood: -4 }, anim: "study", emo: "determined", emoji: "📚", say: "我起了，一秒钟就背完了（并没有）。" },
+        { text: "再睡五分钟，就五分钟", fx: { effort: -6, mood: 8 }, anim: "sleep", emo: "sleepy", emoji: "😴", say: "醒来已经是下午两点，这五分钟很漫长。" },
+        { text: "刷会儿抖音提提神", fx: { effort: -3, luck: 5 }, anim: "laugh", emo: "happy", emoji: "📱", say: "刷到一条「专升本上岸」视频，感觉已经上岸了。" },
+        { text: "今天请假，不去自习室", fx: { effort: -10, mood: 6 }, anim: "sleep", emo: "smug", emoji: "🚪", say: "偷懒一天，负罪感够我背三章书。" }
+      ]
+    },
+    /* ------------------------------------------------------- 2 ------- */
+    {
+      kicker: "ROUND 02",
+      title: "机构老师的保过班",
+      desc: "「同学，29800 保过班今天最后一天优惠，不过退一半！」老师在电话里情真意切。",
+      emoji: "💸",
+      bg: "bg-2",
+      floaters: ["💸", "📞", "🧾"],
+      options: [
+        { text: "报名，保过要紧", fx: { money: -30, effort: 6, mood: 4 }, anim: "facepalm", emo: "panic", emoji: "💸", say: "刷完卡的那一刻，我离上岸只差报名费了。" },
+        { text: "先白嫖试听课", fx: { effort: 3, mood: 2 }, anim: "think", emo: "think", emoji: "🎧", say: "试听课老师讲了四十分钟他的奋斗史。" },
+        { text: "砍价到 9800", fx: { money: -12, effort: 4 }, anim: "point", emo: "smug", emoji: "🤝", say: "砍价成功，但课时也砍成了三分之一。" },
+        { text: "反手举报虚假宣传", fx: { luck: 8, mood: 5, money: 5 }, anim: "laugh", emo: "happy", emoji: "🚨", say: "举报完还拿了 200 奖励，这波血赚。" }
+      ]
+    },
+    /* ------------------------------------------------------- 3 ------- */
+    {
+      kicker: "ROUND 03",
+      title: "室友的深夜开黑",
+      desc: "凌晨一点，室友的机械键盘噼里啪啦，还夹着「上上上，打他打他」。",
+      emoji: "🎮",
+      bg: "bg-3",
+      floaters: ["🎮", "🎧", "🌙"],
+      options: [
+        { text: "加入一把，就一把", fx: { effort: -8, mood: 10 }, anim: "laugh", emo: "happy", emoji: "🎮", say: "一把接一把，天亮了，段位升了，分数没升。" },
+        { text: "戴上耳塞继续背书", fx: { effort: 7, mood: -5 }, anim: "study", emo: "angry", emoji: "🎧", say: "我在背书，他们在开黑，我们都有光明的未来。" },
+        { text: "劝他一起学习", fx: { effort: 4, mood: 3 }, anim: "point", emo: "determined", emoji: "🤝", say: "他说「你先把专升本考上再说」，好有道理。" },
+        { text: "搬去图书馆通宵", fx: { effort: 9, mood: -2, money: -3 }, anim: "run", emo: "panic", emoji: "🏃", say: "图书馆的保安看我的眼神像看一个传说。" }
+      ]
+    },
+    /* ------------------------------------------------------- 4 ------- */
+    {
+      kicker: "ROUND 04",
+      title: "朋友圈的录取通知",
+      desc: "高中同学发了一条：「专升本上岸啦，感谢不放弃的自己！」配图是录取通知书。",
+      emoji: "📄",
+      bg: "bg-4",
+      floaters: ["💔", "📄", "👍"],
+      options: [
+        { text: "点赞并送上祝福", fx: { mood: -6, luck: 2 }, anim: "droop", emo: "sad", emoji: "👍", say: "点完赞，我默默把手机扣在桌上。" },
+        { text: "屏蔽他，眼不见为净", fx: { mood: 6 }, anim: "facepalm", emo: "smug", emoji: "🙈", say: "世界清净了，但书还是要背。" },
+        { text: "焦虑到立刻刷两套卷", fx: { effort: 9, mood: -8 }, anim: "panic", emo: "panic", emoji: "📝", say: "越刷越慌，越慌越刷，这就是专升本闭环。" },
+        { text: "发一条「我也快了」", fx: { mood: 5, luck: -2 }, anim: "laugh", emo: "smug", emoji: "🐟", say: "发完心里没底，但评论区已经有人开始祝福了。" }
+      ]
+    },
+    /* ------------------------------------------------------- 5 ------- */
+    {
+      kicker: "ROUND 05",
+      title: "模拟考 59 分",
+      desc: "卷子发下来，红色 59 分，差一分及格。你盯着那一道选择题，看了一分钟。",
+      emoji: "📝",
+      bg: "bg-5",
+      floaters: ["📝", "❌", "😭"],
+      options: [
+        { text: "逐题复盘错因", fx: { effort: 9, mood: -3 }, anim: "study", emo: "determined", emoji: "🔍", say: "复盘完发现，错的都是我会的，那就当没这回事。" },
+        { text: "骂出题人不会出题", fx: { mood: 7, effort: -3 }, anim: "angry", emo: "angry", emoji: "😤", say: "骂得很爽，但下次还是做错。" },
+        { text: "找学霸对答案", fx: { effort: 5, mood: 2, luck: 2 }, anim: "point", emo: "think", emoji: "🫱", say: "对完答案，学霸说他也没复习，我心态更崩了。" },
+        { text: "摆烂一整天", fx: { effort: -9, mood: 9 }, anim: "sleep", emo: "smug", emoji: "🛌", say: "摆烂一时爽，一直摆烂一直爽——直到查分。" }
+      ]
+    },
+    /* ------------------------------------------------------- 6 ------- */
+    {
+      kicker: "ROUND 06",
+      title: "家里的电话",
+      desc: "妈妈打来电话：「最近学习怎么样啊？别太累了。」你听见电话那头的咳嗽声。",
+      emoji: "📞",
+      bg: "bg-6",
+      floaters: ["📞", "🏠", "❤️"],
+      options: [
+        { text: "报喜不报忧", fx: { mood: -2, luck: 3 }, anim: "think", emo: "sad", emoji: "🙂", say: "「挺好的，都复习完了。」挂掉电话我就打开了书。" },
+        { text: "老实交代进度", fx: { mood: -6, effort: 2 }, anim: "droop", emo: "sad", emoji: "😔", say: "我妈沉默了三秒，说「没事，妈养你」。" },
+        { text: "反向哭穷要生活费", fx: { money: 15, mood: 4 }, anim: "laugh", emo: "smug", emoji: "💰", say: "到账 800，备注写「好好吃饭」，我有点想哭。" },
+        { text: "说信号不好先挂了", fx: { mood: 6, effort: -2 }, anim: "facepalm", emo: "smug", emoji: "📵", say: "「喂喂喂？听不见——」这是我今年最熟练的谎言。" }
+      ]
+    },
+    /* ------------------------------------------------------- 7 ------- */
+    {
+      kicker: "ROUND 07",
+      title: "图书馆的心动",
+      desc: "对面坐着一个很好看的人，也在看高数。TA 抬头时，你们对视了 0.5 秒。",
+      emoji: "💘",
+      bg: "bg-7",
+      floaters: ["💘", "📖", "✨"],
+      options: [
+        { text: "递纸条要微信", fx: { mood: 12, effort: -6, luck: 4 }, anim: "hop", emo: "happy", emoji: "💌", say: "纸条递过去，TA 笑了一下——高数书压着纸条，我没敢看结果。" },
+        { text: "假装看书偷偷看", fx: { mood: 5, effort: -2 }, anim: "think", emo: "happy", emoji: "👀", say: "书翻了三页，一页都没看进去，但心情很好。" },
+        { text: "主动请教高数题", fx: { effort: 6, mood: 7 }, anim: "study", emo: "star", emoji: "📐", say: "TA 讲题很耐心，我决定把这道题错第二次。" },
+        { text: "直接上前表白", fx: { mood: 15, effort: -10, luck: 10 }, anim: "hop", emo: "star", emoji: "🌹", say: "「同学，你愿意和我一起上岸吗？」——然后我学会了被拒绝也不影响学习。" }
+      ]
+    },
+    /* ------------------------------------------------------- 8 ------- */
+    {
+      kicker: "ROUND 08",
+      title: "倒计时 7 天",
+      desc: "手机壁纸写着「距离专升本还有 7 天」。你盯着它，它盯着你。",
+      emoji: "⏳",
+      bg: "bg-8",
+      floaters: ["⏳", "🍀", "🙏"],
+      options: [
+        { text: "背押题模板", fx: { effort: 8, mood: -3 }, anim: "study", emo: "determined", emoji: "📋", say: "模板背了二十套，考场上只用到半句。" },
+        { text: "通宵突击", fx: { effort: 10, mood: -9 }, anim: "panic", emo: "cry", emoji: "🌚", say: "通宵到五点，觉得自己什么都会了——这是幻觉。" },
+        { text: "转发锦鲤", fx: { luck: 6, effort: -2 }, anim: "laugh", emo: "happy", emoji: "🐟", say: "转发了一条锦鲤，附言「求求了」，点赞 3 个。" },
+        { text: "去庙里拜拜", fx: { luck: 10, money: -5, effort: -2 }, anim: "point", emo: "think", emoji: "🙏", say: "庙里香火很旺，我许的愿是「会的都考，考的都会」。" }
+      ]
+    },
+    /* ------------------------------------------------------- 9 ------- */
+    {
+      kicker: "ROUND 09",
+      title: "考前最后一晚",
+      desc: "明天考试。书包收好了，准考证在桌上，你的心跳得比闹钟还响。",
+      emoji: "🌙",
+      bg: "bg-9",
+      floaters: ["🌙", "🛏️", "📚"],
+      options: [
+        { text: "早点睡，养足精神", fx: { mood: 8, effort: 2 }, anim: "sleep", emo: "sleepy", emoji: "🛏️", say: "躺下之后，把整本书在脑子里背了三遍才睡着。" },
+        { text: "再刷最后一套卷", fx: { effort: 9, mood: -6 }, anim: "study", emo: "panic", emoji: "📄", say: "最后一套卷很难，但已经没有时间难过了。" },
+        { text: "打一局游戏放松", fx: { mood: 9, effort: -5 }, anim: "laugh", emo: "happy", emoji: "🎮", say: "说好一局，打完发现已经零点了，这局真长。" },
+        { text: "和室友聊到三点", fx: { mood: 6, effort: -8 }, anim: "laugh", emo: "happy", emoji: "🗣️", say: "聊了未来、理想和明天早上吃什么，焦虑突然就轻了。" }
+      ]
+    },
+    /* ------------------------------------------------------- 10 ------ */
+    {
+      kicker: "FINAL ROUND",
+      title: "查分",
+      desc: "省教育考试院官网，转圈圈的加载图标。你的手悬在刷新键上方。",
+      emoji: "📱",
+      bg: "bg-10",
+      floaters: ["📱", "💓", "🎲"],
+      options: [
+        { text: "疯狂刷新页面", fx: { luck: 4, mood: -6 }, anim: "panic", emo: "panic", emoji: "🌀", say: "刷新了 47 次，系统没崩，我先崩了。" },
+        { text: "找同学帮我查", fx: { luck: 2, mood: -3 }, anim: "think", emo: "cry", emoji: "🙈", say: "同学说「你过了」，我让他截图，他说截图在另一个手机上。" },
+        { text: "淡定等短信通知", fx: { mood: 6 }, anim: "sleep", emo: "smug", emoji: "📩", say: "表面淡定，实际上把手机音量调到了最大。" },
+        { text: "直接打招生办电话", fx: { luck: 8, effort: 2 }, anim: "point", emo: "determined", emoji: "📞", say: "招生办老师说「你自己查一下」，然后把电话挂了。" }
+      ]
+    }
+  ],
+
+  /* 点击角色时的随机互动 */
+  tapLines: [
+    { text: "别点我，单词还没背完！", anim: "shake", emo: "angry" },
+    { text: "点我也不会涨分，真的。", anim: "droop", emo: "sad" },
+    { text: "你手气这么差，还点我？", anim: "shake", emo: "smug" },
+    { text: "再点我，我就去睡觉了。", anim: "sleep", emo: "sleepy" },
+    { text: "专升本……好难啊……", anim: "droop", emo: "cry" },
+    { text: "我头发呢？刚才还在这的。", anim: "panic", emo: "shock" },
+    { text: "求你了，让我背两道题。", anim: "facepalm", emo: "sad" },
+    { text: "摸鱼一时爽，查分火葬场。", anim: "laugh", emo: "happy" },
+    { text: "点击领取 10% 上岸率（假的）。", anim: "spin", emo: "star" },
+    { text: "别看我，我只是一条咸鱼。", anim: "laugh", emo: "smug" }
+  ],
+
+  /* 查分加载文案 */
+  loadingTips: [
+    "正在连接省教育考试院…",
+    "正在核对准考证号…",
+    "正在读取十年真题记忆…",
+    "正在给你的未来算一卦…",
+    "正在询问锦鲤的意见…",
+    "正在安抚颤抖的考生…",
+    "马上就好，真的马上…"
+  ],
+
+  /* 结果文案 */
+  win: {
+    title: "🎉 升本成功！",
+    sub: "忘本时刻到！你跳起来喊出了那句经典台词——",
+    shout: "忘本！！！",
+    lines: [
+      "专科的三年像一场梦，本科的门槛像一道坎，你跨过去了。",
+      "从今天起，你可以理直气壮地说：我是本科生了。",
+      "（然后发现本科的课更难，这是另一个故事了。）"
+    ]
+  },
+  lose: {
+    title: "💔 忘专失败",
+    sub: "系统弹出结果：未达到录取线。你低下头，小声说——",
+    shout: "忘专失败……",
+    lines: [
+      "没关系，明年再来一年，你已经很有经验了。",
+      "专升本的尽头不是本科，是「再考一次」。",
+      "（深呼吸，人生很长，这次只是个小考试。）"
+    ]
+  },
+
+  /* 战报图/分享文案的固定标语 */
+  SLOGANS: [
+    "基础上岸率只有 10%，你能比小专更忘本吗？",
+    "10 回合，4 选 1，命运掌握在选项里（也没有）。",
+    "忘本 or 忘专失败？来试试你的上岸率！",
+    "专升本模拟器 · 一个不负责结果的小游戏"
+  ]
+};
+
+</script>
+<script>
+/* ===== audio.js ===== */
+/* ==========================================================================
+   专升本模拟器 · 音频引擎
+   原创合成「说唱风」伴奏（Trap/Drill 味 808 + 军鼓 + 踩镲 + 暗色 Pluck），
+   不内置任何版权曲目；支持导入本地音频（仅本机播放）。
+   ========================================================================== */
+window.GameAudio = (function () {
+  "use strict";
+  var ctx = null, master = null, musicGain = null, sfxGain = null;
+  var noiseBuf = null, timer = null, step = 0, nextTime = 0, running = false;
+  var muted = false, voiceOn = true, customEl = null, customUrl = null, started = false;
+
+  var BPM = 142, STEP = 60 / BPM / 4; // 16 分音符
+  var KICK = [0, 3, 6, 10, 16, 19, 22, 26];
+  var SNARE = [8, 12, 24, 28];
+  var HAT = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31];
+  var BASS = [
+    { s: 0, f: 55 }, { s: 6, f: 43.65 }, { s: 10, f: 49 }, { s: 16, f: 55 },
+    { s: 19, f: 65.41 }, { s: 22, f: 49 }, { s: 26, f: 43.65 }, { s: 30, f: 55 }
+  ];
+  var MELODY = [
+    { s: 2, f: 440, d: 0.35 }, { s: 5, f: 523.25, d: 0.3 }, { s: 11, f: 587.33, d: 0.4 },
+    { s: 14, f: 659.25, d: 0.3 }, { s: 18, f: 523.25, d: 0.35 }, { s: 21, f: 440, d: 0.3 },
+    { s: 27, f: 392, d: 0.35 }, { s: 30, f: 329.63, d: 0.3 }
+  ];
+
+  function makeNoise() {
+    var len = Math.floor(ctx.sampleRate * 1.2);
+    var buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * 0.9;
+    return buf;
+  }
+
+  function init() {
+    if (ctx) return true;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return false;
+      ctx = new AC();
+      master = ctx.createGain();
+      master.gain.value = muted ? 0 : 0.8;
+      var comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 22; comp.ratio.value = 8;
+      comp.attack.value = 0.004; comp.release.value = 0.3;
+      musicGain = ctx.createGain(); musicGain.gain.value = 0.55;
+      sfxGain = ctx.createGain(); sfxGain.gain.value = 0.9;
+      musicGain.connect(master); sfxGain.connect(master);
+      master.connect(comp); comp.connect(ctx.destination);
+      noiseBuf = makeNoise();
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function resume() { if (init() && ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} } }
+
+  /* ------------------------------------------------------------- 乐器 */
+  function kick(t, g) {
+    var o = ctx.createOscillator(), ga = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(42, t + 0.16);
+    ga.gain.setValueAtTime(g || 0.95, t);
+    ga.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
+    o.connect(ga); ga.connect(musicGain);
+    o.start(t); o.stop(t + 0.45);
+  }
+  function snare(t, g) {
+    var n = ctx.createBufferSource(); n.buffer = noiseBuf;
+    var hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 1500;
+    var ga = ctx.createGain();
+    ga.gain.setValueAtTime(g || 0.5, t);
+    ga.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+    n.connect(hp); hp.connect(ga); ga.connect(musicGain);
+    n.start(t); n.stop(t + 0.2);
+    var o = ctx.createOscillator(); o.type = "triangle"; o.frequency.setValueAtTime(190, t);
+    var og = ctx.createGain(); og.gain.setValueAtTime(0.18, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+    o.connect(og); og.connect(musicGain); o.start(t); o.stop(t + 0.1);
+  }
+  function hat(t, open) {
+    var n = ctx.createBufferSource(); n.buffer = noiseBuf;
+    var hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 7500;
+    var ga = ctx.createGain();
+    var d = open ? 0.14 : 0.045;
+    ga.gain.setValueAtTime(open ? 0.12 : 0.09, t);
+    ga.gain.exponentialRampToValueAtTime(0.001, t + d);
+    n.connect(hp); hp.connect(ga); ga.connect(musicGain);
+    n.start(t); n.stop(t + d + 0.02);
+  }
+  function bass808(t, f, dur) {
+    var o = ctx.createOscillator(), ga = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(f * 1.6, t);
+    o.frequency.exponentialRampToValueAtTime(f, t + 0.06);
+    ga.gain.setValueAtTime(0.0001, t);
+    ga.gain.exponentialRampToValueAtTime(0.55, t + 0.015);
+    ga.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(ga); ga.connect(musicGain);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  function pluck(t, f, dur) {
+    var o = ctx.createOscillator(), ga = ctx.createGain(), lp = ctx.createBiquadFilter();
+    o.type = "square"; o.frequency.value = f;
+    lp.type = "lowpass"; lp.frequency.setValueAtTime(2600, t); lp.frequency.exponentialRampToValueAtTime(700, t + dur);
+    ga.gain.setValueAtTime(0.0001, t);
+    ga.gain.exponentialRampToValueAtTime(0.11, t + 0.008);
+    ga.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(lp); lp.connect(ga); ga.connect(musicGain);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+
+  /* ------------------------------------------------------------- 调度 */
+  function schedule() {
+    if (!running || customEl) return;
+    var horizon = ctx.currentTime + 0.14;
+    while (nextTime < horizon) {
+      var s = step % 32, t = nextTime;
+      if (KICK.indexOf(s) >= 0) kick(t, s === 0 ? 1 : 0.8);
+      if (SNARE.indexOf(s) >= 0) snare(t, s === 8 || s === 24 ? 0.55 : 0.32);
+      if (HAT.indexOf(s) >= 0) hat(t, s % 8 === 6);
+      for (var i = 0; i < BASS.length; i++) if (BASS[i].s === s) bass808(t, BASS[i].f, STEP * 3.2);
+      for (var j = 0; j < MELODY.length; j++) if (MELODY[j].s === s) pluck(t, MELODY[j].f, MELODY[j].d);
+      nextTime += STEP;
+      step++;
+    }
+  }
+  function startMusic() {
+    if (!init()) return;
+    resume();
+    if (customEl) { try { customEl.play(); } catch (e) {} return; }
+    if (running) return;
+    running = true; step = 0; nextTime = ctx.currentTime + 0.08;
+    timer = setInterval(schedule, 25);
+  }
+  function stopMusic() {
+    running = false;
+    if (timer) { clearInterval(timer); timer = null; }
+  }
+
+  /* ------------------------------------------------------------- 音效 */
+  function beep(freq, dur, type, gain, slideTo) {
+    if (!init()) return;
+    resume();
+    var t = ctx.currentTime;
+    var o = ctx.createOscillator(), ga = ctx.createGain();
+    o.type = type || "sine"; o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    ga.gain.setValueAtTime(gain || 0.16, t);
+    ga.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(ga); ga.connect(sfxGain); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function noiseHit(dur, hpFreq, gain) {
+    if (!init()) return;
+    resume();
+    var t = ctx.currentTime;
+    var n = ctx.createBufferSource(); n.buffer = noiseBuf;
+    var hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = hpFreq || 800;
+    var ga = ctx.createGain(); ga.gain.setValueAtTime(gain || 0.2, t); ga.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    n.connect(hp); hp.connect(ga); ga.connect(sfxGain); n.start(t); n.stop(t + dur + 0.02);
+  }
+  var sfx = {
+    click: function () { beep(880, 0.06, "square", 0.08); },
+    pop: function () { beep(520, 0.09, "triangle", 0.12, 900); },
+    good: function () { beep(660, 0.1, "triangle", 0.12); setTimeout(function () { beep(990, 0.16, "triangle", 0.12); }, 90); },
+    bad: function () { beep(240, 0.16, "sawtooth", 0.1, 120); },
+    whoosh: function () { noiseHit(0.32, 500, 0.16); },
+    riser: function () {
+      if (!init()) return; resume();
+      var t = ctx.currentTime, o = ctx.createOscillator(), ga = ctx.createGain();
+      o.type = "sawtooth"; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(1200, t + 1.6);
+      ga.gain.setValueAtTime(0.02, t); ga.gain.linearRampToValueAtTime(0.12, t + 1.5); ga.gain.exponentialRampToValueAtTime(0.001, t + 1.7);
+      o.connect(ga); ga.connect(sfxGain); o.start(t); o.stop(t + 1.75);
+    },
+    win: function () {
+      var notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach(function (f, i) { setTimeout(function () { beep(f, 0.22, "triangle", 0.14); }, i * 110); });
+      setTimeout(function () { noiseHit(0.5, 1200, 0.12); }, 440);
+    },
+    lose: function () {
+      var notes = [392, 349.23, 311.13, 261.63];
+      notes.forEach(function (f, i) { setTimeout(function () { beep(f, 0.3, "sawtooth", 0.09); }, i * 160); });
+    },
+    confetti: function () { noiseHit(0.18, 3000, 0.1); }
+  };
+
+  /* ------------------------------------------------------------- 语音 */
+  function speak(text) {
+    if (!voiceOn || !("speechSynthesis" in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = "zh-CN"; u.rate = 1.12; u.pitch = 1.18; u.volume = 0.9;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  /* ------------------------------------------------------- 自定义音频 */
+  function setCustom(file) {
+    stopMusic();
+    if (customEl) { try { customEl.pause(); } catch (e) {} }
+    if (customUrl) { try { URL.revokeObjectURL(customUrl); } catch (e) {} }
+    customUrl = URL.createObjectURL(file);
+    customEl = new Audio(customUrl);
+    customEl.loop = true;
+    customEl.volume = muted ? 0 : 0.65;
+    try { customEl.play(); } catch (e) {}
+    return true;
+  }
+  function clearCustom() {
+    if (customEl) { try { customEl.pause(); } catch (e) {} }
+    customEl = null; customUrl = null;
+    if (started) startMusic();
+  }
+
+  /* ------------------------------------------------------------- 对外 */
+  return {
+    start: function () { started = true; startMusic(); },
+    stop: stopMusic,
+    sfx: function (name) { if (sfx[name]) { if (!muted) sfx[name](); } },
+    speak: speak,
+    setVoice: function (v) { voiceOn = !!v; },
+    isVoiceOn: function () { return voiceOn; },
+    toggleMute: function () {
+      muted = !muted;
+      if (master) master.gain.value = muted ? 0 : 0.8;
+      if (customEl) customEl.volume = muted ? 0 : 0.65;
+      return muted;
+    },
+    isMuted: function () { return muted; },
+    setCustom: setCustom,
+    clearCustom: clearCustom,
+    hasCustom: function () { return !!customEl; },
+    _ctx: function () { return ctx; }
+  };
+})();
+
+</script>
+<script>
+/* ===== char.js ===== */
+/* ==========================================================================
+   专升本模拟器 · 角色 & 粒子特效
+   - 内联 SVG 角色「小专」：11 种表情 × 15 种动作，全部 CSS 驱动
+   - Canvas 礼花 / 撒花 / 粒子，DOM 浮动文字
+   ========================================================================== */
+window.Character = (function () {
+  "use strict";
+
+  var SVG = [
+    '<svg class="chibi" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">',
+    '<ellipse class="shadow" cx="100" cy="207" rx="46" ry="9"/>',
+    '<g class="body">',
+    '  <g class="legs">',
+    '    <rect class="leg" x="80" y="168" width="14" height="30" rx="7"/>',
+    '    <rect class="leg" x="106" y="168" width="14" height="30" rx="7"/>',
+    '    <ellipse class="shoe" cx="87" cy="200" rx="15" ry="7"/>',
+    '    <ellipse class="shoe" cx="113" cy="200" rx="15" ry="7"/>',
+    '  </g>',
+    '  <path class="torso" d="M64 118 Q64 104 80 104 L120 104 Q136 104 136 118 L136 158 Q136 172 120 172 L80 172 Q64 172 64 158 Z"/>',
+    '  <path class="collar" d="M88 105 L100 120 L112 105 Z"/>',
+    '  <text x="100" y="143" text-anchor="middle" font-size="15" font-weight="900" fill="#eef3ff" opacity=".8">专</text>',
+    '  <g class="arm arm-l"><rect x="52" y="116" width="14" height="46" rx="7"/><circle class="hand" cx="59" cy="164" r="8"/></g>',
+    '  <g class="arm arm-r"><rect x="134" y="116" width="14" height="46" rx="7"/><circle class="hand" cx="141" cy="164" r="8"/></g>',
+    '  <g class="book"><rect x="122" y="146" width="27" height="19" rx="2" transform="rotate(-14 135 155)"/></g>',
+    '  <g class="head">',
+    '    <ellipse class="ear" cx="56" cy="84" rx="7" ry="9"/>',
+    '    <ellipse class="ear" cx="144" cy="84" rx="7" ry="9"/>',
+    '    <ellipse class="face" cx="100" cy="78" rx="46" ry="44"/>',
+    '    <path class="hair" d="M54 72 Q54 32 100 28 Q146 32 146 72 Q140 58 132 54 Q118 64 100 58 Q82 64 68 54 Q60 58 54 72 Z"/>',
+    '    <g class="brows"><path class="brow l" d="M72 58 q10 -6 20 -1"/><path class="brow r" d="M108 57 q10 -5 20 1"/></g>',
+    '    <g class="eyes">',
+    '      <g class="e-normal">',
+    '        <ellipse class="eyew" cx="82" cy="78" rx="8" ry="9"/><circle class="pupil" cx="84" cy="79" r="3.5"/><circle class="shine" cx="86" cy="76" r="1.6"/><circle class="shine" cx="82.4" cy="81" r="0.8"/>',
+    '        <ellipse class="eyew" cx="118" cy="78" rx="8" ry="9"/><circle class="pupil" cx="120" cy="79" r="3.5"/><circle class="shine" cx="122" cy="76" r="1.6"/><circle class="shine" cx="118.4" cy="81" r="0.8"/>',
+    '      </g>',
+    '      <g class="e-happy"><path class="line" d="M74 78 q8 -10 16 0"/><path class="line" d="M110 78 q8 -10 16 0"/></g>',
+    '      <g class="e-sad"><path class="line" d="M74 82 q8 7 16 0"/><path class="line" d="M110 82 q8 7 16 0"/></g>',
+    '      <g class="e-cry"><path class="line" d="M74 76 q8 -8 16 0"/><path class="line" d="M110 76 q8 -8 16 0"/></g>',
+    '      <g class="e-star">',
+    '        <path class="star" d="M82 66 L85 73.6 L93 74.4 L87 80 L88.8 88 L82 83.8 L75.2 88 L77 80 L71 74.4 L79 73.6 Z"/>',
+    '        <path class="star" d="M118 66 L121 73.6 L129 74.4 L123 80 L124.8 88 L118 83.8 L111.2 88 L113 80 L107 74.4 L115 73.6 Z"/>',
+    '      </g>',
+    '      <g class="e-shock">',
+    '        <circle cx="82" cy="78" r="9.5" fill="#fff" stroke="#2b2233" stroke-width="3"/><circle class="p" cx="82" cy="78" r="3.6"/>',
+    '        <circle cx="118" cy="78" r="9.5" fill="#fff" stroke="#2b2233" stroke-width="3"/><circle class="p" cx="118" cy="78" r="3.6"/>',
+    '      </g>',
+    '      <g class="e-closed"><path class="line" d="M74 78 q8 6 16 0"/><path class="line" d="M110 78 q8 6 16 0"/></g>',
+    '      <g class="e-half"><path class="line" d="M74 78 q8 -4 16 0"/><path class="line" d="M110 78 q8 -4 16 0"/></g>',
+    '    </g>',
+    '    <g class="mouths">',
+    '      <path class="m-normal mouth" d="M92 100 q8 7 16 0"/>',
+    '      <path class="m-smile mouth" d="M90 98 q10 13 20 0"/>',
+    '      <ellipse class="m-open mouth-open" cx="100" cy="103" rx="9" ry="7"/>',
+    '      <path class="m-frown mouth" d="M92 105 q8 -9 16 0"/>',
+    '      <path class="m-flat mouth" d="M92 102 h16"/>',
+    '      <path class="m-smirk mouth" d="M92 101 q9 5 18 -2"/>',
+    '      <path class="m-wavy mouth" d="M91 102 q5 -5 9 0 t9 0"/>',
+    '    </g>',
+    '    <g class="tears"><circle class="tear l" cx="72" cy="88" r="4"/><circle class="tear r" cx="128" cy="88" r="4"/></g>',
+    '    <g class="sweat"><path d="M141 54 q7 10 1 15 q-7 -5 -1 -15"/></g>',
+    '    <g class="zzz"><text x="138" y="44">z</text><text x="150" y="32" font-size="14">z</text></g>',
+    '    <g class="cheeks"><ellipse cx="66" cy="92" rx="9" ry="5"/><ellipse cx="134" cy="92" rx="9" ry="5"/></g>',
+    '    <g class="cap">',
+    '      <path class="cap-board" d="M52 46 L100 27 L148 46 L100 64 Z"/>',
+    '      <rect class="cap-base" x="84" y="56" width="32" height="8" rx="3"/>',
+    '      <path class="tassel" d="M148 46 q12 12 3 26"/>',
+    '      <circle class="tassel-dot" cx="151" cy="74" r="3"/>',
+    '    </g>',
+    '  </g>',
+    '</g>',
+    '</svg>'
+  ].join("");
+
+  var handles = {};
+
+  function mount(el, onTap) {
+    if (!el) return null;
+    el.innerHTML = '<div class="char-shell" data-anim="idle">' + SVG + "</div>";
+    var shell = el.querySelector(".char-shell");
+    var chibi = el.querySelector(".chibi");
+    chibi.setAttribute("data-emo", "normal");
+    // 手臂/书要在头之后绘制，才能做出"举手/托腮/拿书"这类遮挡头部的动作
+    try {
+      var body = chibi.querySelector(".body");
+      [".arm-l", ".arm-r", ".book"].forEach(function (sel) {
+        var node = body.querySelector(sel);
+        if (node) body.appendChild(node);
+      });
+    } catch (e) {}
+    var h = { el: el, shell: shell, chibi: chibi, animTimer: null };
+    handles[el.id] = h;
+    if (onTap) {
+      el.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        onTap(h);
+      });
+      el.style.cursor = "pointer";
+    }
+    return h;
+  }
+
+  function setEmo(h, emo) {
+    if (!h || !h.chibi) return;
+    h.chibi.setAttribute("data-emo", emo || "normal");
+  }
+
+  function setAnim(h, anim, ms, back) {
+    if (!h || !h.shell) return;
+    h.shell.setAttribute("data-anim", anim || "idle");
+    if (h.animTimer) { clearTimeout(h.animTimer); h.animTimer = null; }
+    if (ms) {
+      h.animTimer = setTimeout(function () {
+        h.shell.setAttribute("data-anim", back || "idle");
+        h.animTimer = null;
+      }, ms);
+    }
+  }
+
+  function react(h, anim, emo, ms) {
+    setEmo(h, emo);
+    setAnim(h, anim, ms || 1600, "idle");
+  }
+
+  function reset(h) {
+    setEmo(h, "normal");
+    setAnim(h, "idle");
+  }
+
+  /* ------------------------------------------------------------- Canvas */
+  var canvas = null, ctx = null, parts = [], raf = null, dpr = 1;
+
+  function initCanvas() {
+    canvas = document.getElementById("fx");
+    if (!canvas) return;
+    ctx = canvas.getContext("2d");
+    resize();
+    window.addEventListener("resize", resize);
+  }
+  function resize() {
+    if (!canvas) return;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(window.innerWidth * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function loop() {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    for (var i = parts.length - 1; i >= 0; i--) {
+      var p = parts[i];
+      p.vy += p.g || 0.12;
+      p.x += p.vx; p.y += p.vy;
+      p.vx *= 0.99;
+      p.life -= 1;
+      if (p.rot !== undefined) p.rot += p.vr;
+      if (p.life <= 0 || p.y > window.innerHeight + 60) { parts.splice(i, 1); continue; }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, p.life / p.maxLife));
+      if (p.kind === "rect") {
+        ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      } else if (p.kind === "circle") {
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color; ctx.fill();
+      } else if (p.kind === "emoji") {
+        ctx.font = (p.size || 20) + "px system-ui, 'Apple Color Emoji', sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(p.text, p.x, p.y);
+      } else if (p.kind === "text") {
+        ctx.font = "900 " + (p.size || 18) + "px system-ui, sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillStyle = p.color;
+        ctx.fillText(p.text, p.x, p.y);
+      }
+      ctx.restore();
+    }
+    if (parts.length) raf = requestAnimationFrame(loop);
+    else { raf = null; ctx.clearRect(0, 0, window.innerWidth, window.innerHeight); }
+  }
+  function kick() { if (!raf) raf = requestAnimationFrame(loop); }
+
+  var COLORS = ["#ff5fa2", "#8b5cff", "#4be1ff", "#ffd54a", "#50e3a4", "#ff8fb8", "#ffffff"];
+
+  function burst(x, y, count) {
+    count = count || 18;
+    for (var i = 0; i < count; i++) {
+      var a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 6;
+      parts.push({
+        kind: "rect", x: x, y: y,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2,
+        w: 3 + Math.random() * 6, h: 2 + Math.random() * 5,
+        rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        life: 40 + Math.random() * 30, maxLife: 70, g: 0.22
+      });
+    }
+    kick();
+  }
+
+  function confettiRain() {
+    for (var i = 0; i < 90; i++) {
+      parts.push({
+        kind: "rect",
+        x: Math.random() * window.innerWidth,
+        y: -20 - Math.random() * window.innerHeight * 0.5,
+        vx: (Math.random() - 0.5) * 1.6, vy: 1.2 + Math.random() * 3,
+        w: 4 + Math.random() * 7, h: 3 + Math.random() * 6,
+        rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.35,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        life: 120 + Math.random() * 80, maxLife: 200, g: 0.04
+      });
+    }
+    kick();
+  }
+
+  function rainDrops() {
+    for (var i = 0; i < 46; i++) {
+      parts.push({
+        kind: "circle",
+        x: Math.random() * window.innerWidth,
+        y: -10 - Math.random() * 120,
+        vx: -0.4, vy: 5 + Math.random() * 4,
+        r: 1.6 + Math.random() * 2,
+        color: "rgba(155,190,255,.65)",
+        life: 60, maxLife: 60, g: 0.15
+      });
+    }
+    kick();
+  }
+
+  function emojiBurst(x, y, text, size) {
+    parts.push({
+      kind: "emoji", x: x, y: y, vx: (Math.random() - 0.5) * 1.2, vy: -2 - Math.random(),
+      text: text, size: size || 22, life: 60, maxLife: 60, g: 0.06
+    });
+    kick();
+  }
+
+  function floatText(x, y, text, color, size) {
+    parts.push({
+      kind: "text", x: x, y: y, vx: (Math.random() - 0.5) * 0.6, vy: -2.2,
+      text: text, color: color || "#fff", size: size || 20, life: 50, maxLife: 50, g: 0.02
+    });
+    kick();
+  }
+
+  /* ------------------------------------------------------- DOM 浮动文字 */
+  function domFloat(parent, text, cls, x, y) {
+    if (!parent) return;
+    var el = document.createElement("div");
+    el.className = "float-chip " + (cls || "");
+    el.textContent = text;
+    el.style.left = (x || 50) + "%";
+    el.style.top = (y || 50) + "%";
+    parent.appendChild(el);
+    requestAnimationFrame(function () {
+      el.style.transition = "transform .9s cubic-bezier(.2,.7,.3,1), opacity .9s ease";
+      el.style.transform = "translate(-50%, -70px)";
+      el.style.opacity = "0";
+    });
+    setTimeout(function () { el.remove(); }, 1000);
+  }
+
+  return {
+    mount: mount, setEmo: setEmo, setAnim: setAnim, react: react, reset: reset,
+    initCanvas: initCanvas, burst: burst, confettiRain: confettiRain, rainDrops: rainDrops,
+    emojiBurst: emojiBurst, floatText: floatText, domFloat: domFloat,
+    handles: handles
+  };
+})();
+
+</script>
+<script>
+/* ===== game.js ===== */
+/* ==========================================================================
+   专升本模拟器 · 主流程
+   10 回合 × 4 选 1 → 查分 → 忘本 / 忘专失败 → 分享
+   ========================================================================== */
+(function () {
+  "use strict";
+  var D = window.GAME_DATA, A = window.GameAudio, C = window.Character;
+
+  var state = {
+    started: false, round: 0,
+    stats: { effort: 50, mood: 50, luck: 50, money: 50 },
+    picks: [], chance: 10, roll: 0, win: false
+  };
+  var chars = {};
+  var els = {};
+  var bubbleTimer = null, lastTap = 0, busy = false, autotest = false, autoTimer = null;
+  var DEMO = new URLSearchParams(location.search);
+
+  function $(id) { return document.getElementById(id); }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function rand(a, b) { return a + Math.random() * (b - a); }
+
+  /* ------------------------------------------------------------ 初始化 */
+  function init() {
+    ["screen-start", "screen-game", "screen-loading", "screen-result", "round-label", "round-bar",
+      "round-pct", "scene", "scene-bg", "floaters", "scene-emoji", "bubble", "round-card", "round-kicker",
+      "round-title", "round-desc", "options", "btn-next", "load-bar", "load-tip",
+      "result-char", "result-bubble", "result-title", "result-sub", "result-grid", "recap",
+      "result-flash", "toast", "sheet", "sheet-title", "sheet-body", "file-bgm"
+    ].forEach(function (id) { els[id] = $(id); });
+    els.screens = { start: $("screen-start"), game: $("screen-game"), loading: $("screen-loading"), result: $("screen-result") };
+    C.initCanvas();
+    chars.start = C.mount($("start-char"), onCharTap);
+    chars.game = C.mount($("game-char"), onCharTap);
+    chars.load = C.mount($("load-char"), null);
+    chars.result = C.mount($("result-char"), onCharTap);
+    bind();
+    handleDemoOrAutotest();
+  }
+
+  function bind() {
+    $("btn-start").addEventListener("click", function () { A.start(); A.sfx("click"); startGame(); });
+    $("btn-how").addEventListener("click", showHowto);
+    $("sheet-close").addEventListener("click", function () { els.sheet.classList.add("hidden"); });
+    $("btn-import").addEventListener("click", function () { els["file-bgm"].click(); });
+    els["file-bgm"].addEventListener("change", function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      A.start(); A.setCustom(f);
+      toast("已换成本地 Rap 🎧（仅本机可听）");
+      $("btn-import").textContent = "🎧 已换本地 Rap";
+    });
+    $("btn-sound").addEventListener("click", function () {
+      var m = A.toggleMute();
+      this.classList.toggle("off", m);
+      this.textContent = m ? "🔇" : "🔊";
+      if (!m) setTimeout(function () { A.sfx("pop"); }, 60);
+    });
+    $("btn-voice").addEventListener("click", function () {
+      A.setVoice(!A.isVoiceOn());
+      this.classList.toggle("off", !A.isVoiceOn());
+      this.textContent = A.isVoiceOn() ? "🗣️" : "🚫";
+      if (A.isVoiceOn()) A.speak("语音已开启");
+    });
+    els["btn-next"].addEventListener("click", nextRound);
+    $("btn-again").addEventListener("click", function () { A.sfx("click"); startGame(); });
+    $("btn-share").addEventListener("click", shareResult);
+    $("btn-poster").addEventListener("click", savePoster);
+    $("btn-copy").addEventListener("click", copyText);
+    // 选项点击在 render 时逐个绑定
+  }
+
+  function show(name) {
+    Object.keys(els.screens).forEach(function (k) {
+      els.screens[k].classList.toggle("active", k === name);
+    });
+  }
+
+  function toast(msg) {
+    els.toast.textContent = msg;
+    els.toast.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { els.toast.classList.remove("show"); }, 1800);
+  }
+
+  /* ------------------------------------------------------------ 游戏流程 */
+  function startGame() {
+    state.started = true; state.round = 0; state.picks = [];
+    state.stats = Object.assign({}, D.START);
+    state.chance = 0; state.roll = 0; state.win = false;
+    busy = false;
+    els.screens.result.classList.remove("active");
+    show("game");
+    C.reset(chars.game);
+    updateStats(false);
+    renderRound(0);
+    A.start();
+  }
+
+  function renderRound(i) {
+    state.round = i;
+    var r = D.rounds[i];
+    if (!r) return;
+    busy = false;
+    els["bubble"].classList.remove("show");
+    els["btn-next"].classList.add("hidden");
+    els["round-card"].style.animation = "none";
+    void els["round-card"].offsetWidth;
+    els["round-card"].style.animation = "";
+
+    els["round-label"].textContent = "第 " + (i + 1) + " / " + D.rounds.length + " 回合";
+    els["round-bar"].style.width = ((i) / D.rounds.length * 100) + "%";
+    els["round-pct"].textContent = Math.round((i) / D.rounds.length * 100) + "%";
+
+    els["scene-bg"].className = "scene-bg " + (r.bg || "bg-1");
+    els["scene-emoji"].textContent = r.emoji || "📚";
+    els["round-kicker"].textContent = r.kicker;
+    els["round-title"].textContent = r.title;
+    els["round-desc"].textContent = r.desc;
+
+    // 背景漂浮物
+    els.floaters.innerHTML = "";
+    (r.floaters || ["📚"]).forEach(function (emo, k) {
+      for (var n = 0; n < 2; n++) {
+        var s = document.createElement("span");
+        s.className = "floater";
+        s.textContent = emo;
+        s.style.left = rand(4, 88) + "%";
+        s.style.bottom = rand(-10, 20) + "%";
+        s.style.animationDelay = (-rand(0, 6)) + "s";
+        s.style.animationDuration = rand(5, 9) + "s";
+        s.style.fontSize = rand(16, 26) + "px";
+        els.floaters.appendChild(s);
+      }
+    });
+
+    C.setEmo(chars.game, "normal");
+    C.setAnim(chars.game, "idle");
+
+    // 选项
+    els.options.innerHTML = "";
+    r.options.forEach(function (opt, idx) {
+      var btn = document.createElement("button");
+      btn.className = "option";
+      btn.style.animationDelay = (idx * 55) + "ms";
+      var fx = fxHtml(opt.fx);
+      btn.innerHTML =
+        '<span class="opt-idx">' + (idx + 1) + "</span>" +
+        '<span class="opt-main"><span class="opt-text">' + esc(opt.text) + "</span>" +
+        '<span class="opt-fx">' + fx + "</span></span>" +
+        '<span class="opt-emoji">' + (opt.emoji || "👉") + "</span>";
+      btn.addEventListener("click", function () { chooseOption(idx, btn); });
+      els.options.appendChild(btn);
+    });
+  }
+
+  function fxHtml(fx) {
+    var out = "";
+    Object.keys(fx || {}).forEach(function (k) {
+      var v = fx[k];
+      if (!v) return;
+      var st = D.STATS[k];
+      out += '<span class="fx-chip ' + (v > 0 ? "up" : "down") + '">' + (v > 0 ? "+" : "") + v + " " + st.name + "</span>";
+    });
+    return out || '<span class="fx-chip">稳</span>';
+  }
+
+  function chooseOption(idx, btn) {
+    if (busy) return;
+    busy = true;
+    var r = D.rounds[state.round];
+    var opt = r.options[idx];
+    A.sfx("click");
+    A.sfx((opt.fx.effort || 0) + (opt.fx.mood || 0) + (opt.fx.luck || 0) >= 0 ? "good" : "bad");
+
+    // 按钮状态
+    Array.prototype.forEach.call(els.options.children, function (b, k) {
+      b.classList.add("dimmed");
+      if (k === idx) b.classList.add("chosen");
+    });
+
+    var rect = btn.getBoundingClientRect();
+    C.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, 16);
+    C.emojiBurst(rect.left + rect.width / 2, rect.top, opt.emoji || "✨", 22);
+
+    // 角色反应
+    C.react(chars.game, opt.anim || "hop", opt.emo || "normal", 1900);
+    showBubble(opt.say || "……", 1900);
+
+    // 数值结算
+    state.picks.push({ round: state.round, idx: idx, opt: opt, emoji: opt.emoji || "👉" });
+    var upKeys = [], downKeys = [];
+    Object.keys(opt.fx).forEach(function (k) {
+      if (!state.stats[k] && state.stats[k] !== 0) return;
+      var before = state.stats[k];
+      state.stats[k] = clamp(before + opt.fx[k], 0, 100);
+      var delta = state.stats[k] - before;
+      if (delta > 0) upKeys.push("+" + delta + " " + D.STATS[k].name);
+      else if (delta < 0) downKeys.push(delta + " " + D.STATS[k].name);
+      var chip = document.createElement("div");
+      chip.className = "float-chip " + (delta >= 0 ? "up" : "down");
+      chip.textContent = (delta > 0 ? "+" : "") + delta + " " + D.STATS[k].name;
+      chip.style.left = rand(22, 78) + "%";
+      chip.style.top = rand(45, 60) + "%";
+      els.scene.appendChild(chip);
+      requestAnimationFrame(function () {
+        chip.style.transition = "transform 1s cubic-bezier(.2,.7,.3,1), opacity 1s ease";
+        chip.style.transform = "translateY(-58px)";
+        chip.style.opacity = "0";
+      });
+      setTimeout(function () { chip.remove(); }, 1100);
+    });
+    updateStats(true);
+
+    // 场景反馈
+    els.scene.classList.remove("hit");
+    void els.scene.offsetWidth;
+    els.scene.classList.add("hit");
+
+    setTimeout(function () {
+      busy = false;
+      els["round-bar"].style.width = ((state.round + 1) / D.rounds.length * 100) + "%";
+      els["round-pct"].textContent = Math.round((state.round + 1) / D.rounds.length * 100) + "%";
+      els["btn-next"].textContent = state.round === D.rounds.length - 1 ? "查分 →" : "继续 →";
+      els["btn-next"].classList.remove("hidden");
+    }, 1650);
+    if (autotest) setTimeout(nextRound, 120);
+  }
+
+  function nextRound() {
+    if (busy) return;
+    if (state.round >= D.rounds.length - 1) {
+      showLoading();
+      return;
+    }
+    A.sfx("whoosh");
+    renderRound(state.round + 1);
+  }
+
+  function showBubble(text, ms) {
+    var b = els["bubble"];
+    b.textContent = text;
+    b.classList.add("show");
+    clearTimeout(bubbleTimer);
+    if (ms) bubbleTimer = setTimeout(function () { b.classList.remove("show"); }, ms);
+  }
+
+  function updateStats(animate) {
+    ["effort", "mood", "luck", "money"].forEach(function (k) {
+      var box = document.querySelector('.stat[data-stat="' + k + '"]');
+      if (!box) return;
+      box.querySelector("b").textContent = Math.round(state.stats[k]);
+      box.querySelector(".mini i").style.width = state.stats[k] + "%";
+    });
+    if (animate) {
+      var last = state.picks[state.picks.length - 1];
+      if (!last) return;
+      Object.keys(last.opt.fx).forEach(function (k) {
+        var box = document.querySelector('.stat[data-stat="' + k + '"]');
+        if (!box) return;
+        box.classList.remove("up", "down");
+        void box.offsetWidth;
+        box.classList.add(last.opt.fx[k] >= 0 ? "up" : "down");
+        setTimeout(function () { box.classList.remove("up", "down"); }, 600);
+      });
+    }
+  }
+
+  /* ------------------------------------------------------------ 查分 */
+  function showLoading() {
+    show("loading");
+    els["load-bar"].style.width = "0%";
+    C.setEmo(chars.load, "panic");
+    C.setAnim(chars.load, "panic", 0);
+    A.sfx("riser");
+    var progress = 0, tipIdx = 0;
+    els["load-tip"].textContent = D.loadingTips[0];
+    var tipTimer = setInterval(function () {
+      tipIdx = (tipIdx + 1) % D.loadingTips.length;
+      els["load-tip"].textContent = D.loadingTips[tipIdx];
+    }, 480);
+    var dur = autotest ? 420 : 2600;
+    var steps = Math.max(4, Math.ceil(dur / 40)), count = 0;
+    var loadTimer = setInterval(function () {
+      count++;
+      progress = Math.min(100, (count / steps) * 100);
+      els["load-bar"].style.width = progress + "%";
+      if (count >= steps) {
+        clearInterval(loadTimer);
+        clearInterval(tipTimer);
+        setTimeout(function () {
+          computeResult();
+          showResult(state.win);
+        }, autotest ? 60 : 320);
+      }
+    }, 40);
+  }
+
+  function computeResult() {
+    var s = state.stats;
+    var raw = D.BASE_CHANCE
+      + (s.effort - 50) * 0.16
+      + (s.mood - 50) * 0.07
+      + (s.luck - 50) * 0.07
+      + (s.money - 50) * 0.03;
+    state.chance = Math.round(clamp(raw, 3, 30) * 10) / 10;
+    state.roll = Math.round(Math.random() * 1000) / 10;
+    state.win = state.roll < state.chance;
+  }
+
+  /* ------------------------------------------------------------ 结果 */
+  function showResult(win) {
+    show("result");
+    var data = win ? D.win : D.lose;
+    state.win = win;
+    els["result-flash"].classList.remove("fire");
+    void els["result-flash"].offsetWidth;
+    els["result-flash"].classList.add("fire");
+
+    C.reset(chars.result);
+    setTimeout(function () {
+      if (win) {
+        C.setEmo(chars.result, "star");
+        C.setAnim(chars.result, "celebrate", 0);
+        C.confettiRain();
+        A.sfx("win");
+        A.speak(data.shout);
+      } else {
+        C.setEmo(chars.result, "cry");
+        C.setAnim(chars.result, "droop", 0);
+        C.rainDrops();
+        A.sfx("lose");
+        A.speak(data.shout);
+      }
+      var rb = els["result-bubble"];
+      rb.textContent = data.shout;
+      rb.className = "bubble big show " + (win ? "win" : "lose");
+    }, 120);
+
+    els["result-title"].textContent = data.title;
+    els["result-title"].className = win ? "win" : "lose";
+    els["result-sub"].textContent = data.sub + "\n" + data.lines[0];
+    els["result-grid"].innerHTML =
+      '<div class="result-cell hl"><span>上岸率</span><b>' + state.chance.toFixed(1) + "%</b></div>" +
+      '<div class="result-cell"><span>掷骰</span><b>' + state.roll.toFixed(1) + "</b></div>" +
+      '<div class="result-cell"><span>努力</span><b>' + Math.round(state.stats.effort) + "</b></div>" +
+      '<div class="result-cell"><span>运气</span><b>' + Math.round(state.stats.luck) + "</b></div>";
+    els["recap"].innerHTML = state.picks.map(function (p) {
+      return '<span class="recap-chip">' + p.emoji + "</span>";
+    }).join("");
+    if (autotest) {
+      document.body.dataset.autotest = JSON.stringify({
+        ok: true, rounds: D.rounds.length, picks: state.picks.length,
+        stats: state.stats, chance: state.chance, roll: state.roll,
+        win: state.win, result: win ? "忘本" : "忘专失败"
+      });
+    }
+  }
+
+  /* ------------------------------------------------------------ 分享 */
+  function shareText() {
+    var r = state.win ? "升本成功，忘本！！！" : "忘专失败……";
+    return "我在《专升本模拟器》里走了 10 个回合，上岸率 " + state.chance.toFixed(1) +
+      "%，掷骰 " + state.roll.toFixed(1) + " → " + r + "\n" +
+      D.SLOGANS[Math.floor(Math.random() * D.SLOGANS.length)] +
+      "\n" + (location.protocol.indexOf("http") === 0 ? location.href.split("?")[0] + "\n" : "") + "#专升本模拟器 #忘本";
+  }
+
+  function copyText() {
+    var t = shareText();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(function () { toast("文案已复制 📋"); }, fallback);
+    } else fallback();
+    function fallback() {
+      var ta = document.createElement("textarea");
+      ta.value = t; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); toast("文案已复制 📋"); } catch (e) { toast("复制失败，请长按选择"); }
+      ta.remove();
+    }
+  }
+
+  function buildPoster() {
+    var win = state.win;
+    var W = 750, H = 1334;
+    var cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    var g = cv.getContext("2d");
+    // 背景
+    var bg = g.createLinearGradient(0, 0, W, H);
+    if (win) { bg.addColorStop(0, "#2a1150"); bg.addColorStop(0.55, "#6b1f5a"); bg.addColorStop(1, "#ff8fb8"); }
+    else { bg.addColorStop(0, "#141a33"); bg.addColorStop(0.6, "#2b2440"); bg.addColorStop(1, "#4a3f66"); }
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    // 装饰圆
+    g.globalAlpha = 0.16; g.fillStyle = "#fff";
+    for (var i = 0; i < 6; i++) {
+      g.beginPath(); g.arc(Math.random() * W, Math.random() * H, 60 + Math.random() * 120, 0, Math.PI * 2); g.fill();
+    }
+    g.globalAlpha = 1;
+    // 标题
+    g.textAlign = "center"; g.fillStyle = "#f6f1ff";
+    g.font = "900 42px system-ui, 'PingFang SC', 'Microsoft YaHei', sans-serif";
+    g.fillText("专升本模拟器", W / 2, 110);
+    g.font = "700 22px system-ui, 'PingFang SC', sans-serif";
+    g.fillStyle = "rgba(246,241,255,.72)";
+    g.fillText("10 回合 · 每回合 4 选 1 · 基础上岸率 10%", W / 2, 156);
+
+    // 角色 emoji
+    g.font = "190px 'Apple Color Emoji','Segoe UI Emoji',system-ui";
+    g.fillText(win ? "🧑‍🎓" : "😭", W / 2, 400);
+
+    // 结果
+    g.font = "900 78px system-ui, 'PingFang SC', sans-serif";
+    g.fillStyle = win ? "#ffe680" : "#c9d1ff";
+    g.fillText(win ? "忘本！！！" : "忘专失败……", W / 2, 530);
+    g.font = "800 34px system-ui, 'PingFang SC', sans-serif";
+    g.fillStyle = win ? "#fff" : "rgba(235,238,255,.85)";
+    g.fillText(win ? "升本成功！" : "升本失败", W / 2, 590);
+
+    // 数据卡
+    g.fillStyle = "rgba(255,255,255,.1)";
+    roundRect(g, 70, 640, W - 140, 200, 28); g.fill();
+    var cells = [
+      ["上岸率", state.chance.toFixed(1) + "%"],
+      ["掷骰", state.roll.toFixed(1)],
+      ["努力", String(Math.round(state.stats.effort))],
+      ["心态", String(Math.round(state.stats.mood))],
+      ["运气", String(Math.round(state.stats.luck))],
+      ["资金", String(Math.round(state.stats.money))]
+    ];
+    cells.forEach(function (c, k) {
+      var col = k % 3, row = Math.floor(k / 3);
+      var cx = 70 + (W - 140) / 3 * (col + 0.5);
+      var cy = 700 + row * 72;
+      g.fillStyle = "rgba(246,241,255,.6)";
+      g.font = "700 20px system-ui, 'PingFang SC', sans-serif";
+      g.fillText(c[0], cx, cy);
+      g.fillStyle = "#fff";
+      g.font = "900 36px system-ui, 'PingFang SC', sans-serif";
+      g.fillText(c[1], cx, cy + 42);
+    });
+
+    // 十回合回顾
+    g.fillStyle = "rgba(246,241,255,.55)";
+    g.font = "700 20px system-ui, 'PingFang SC', sans-serif";
+    g.fillText("我的 10 个选择", W / 2, 900);
+    g.font = "40px 'Apple Color Emoji','Segoe UI Emoji',system-ui";
+    var emos = state.picks.map(function (p) { return p.emoji; });
+    var line = emos.slice(0, 5).join("  ");
+    var line2 = emos.slice(5).join("  ");
+    g.fillText(line, W / 2, 960);
+    g.fillText(line2, W / 2, 1020);
+
+    // 标语
+    g.font = "800 26px system-ui, 'PingFang SC', sans-serif";
+    g.fillStyle = "rgba(255,255,255,.9)";
+    g.fillText("基础上岸率只有 10%，", W / 2, 1110);
+    g.fillText("你能比小专更忘本吗？", W / 2, 1150);
+
+    // 底部
+    g.font = "600 20px system-ui, 'PingFang SC', sans-serif";
+    g.fillStyle = "rgba(246,241,255,.5)";
+    g.fillText("专升本模拟器 · 纯娱乐 · 结果由玄学决定", W / 2, 1250);
+    return cv;
+  }
+  function roundRect(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  }
+
+  function canvasToFile(cv, cb) {
+    if (cv.toBlob) {
+      cv.toBlob(function (blob) {
+        if (!blob) return cb(null);
+        cb(new File([blob], "专升本模拟器-战报.png", { type: "image/png" }));
+      }, "image/png");
+    } else cb(null);
+  }
+
+  function savePoster() {
+    var cv = buildPoster();
+    canvasToFile(cv, function (file) {
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: "专升本模拟器", text: shareText() }).catch(function () { downloadPoster(cv); });
+      } else {
+        downloadPoster(cv);
+      }
+    });
+  }
+  function downloadPoster(cv) {
+    try {
+      var a = document.createElement("a");
+      a.download = "专升本模拟器-战报.png";
+      a.href = cv.toDataURL("image/png");
+      document.body.appendChild(a); a.click(); a.remove();
+      toast("战报图已生成，可长按保存 🖼");
+    } catch (e) { toast("生成失败，试试截图分享"); }
+  }
+
+  function shareResult() {
+    var cv = buildPoster();
+    canvasToFile(cv, function (file) {
+      var data = { title: "专升本模拟器", text: shareText() };
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        data.files = [file];
+        navigator.share(data).catch(function () { copyText(); });
+      } else if (navigator.share) {
+        navigator.share(data).catch(function () { copyText(); });
+      } else {
+        copyText();
+        toast("已复制分享文案 📋");
+      }
+    });
+  }
+
+  /* ------------------------------------------------------ 交互小彩蛋 */
+  function onCharTap(h) {
+    var now = Date.now();
+    if (now - lastTap < 700) return;
+    lastTap = now;
+    A.sfx("pop");
+    var line = D.tapLines[Math.floor(Math.random() * D.tapLines.length)];
+    if (h === chars.start) {
+      C.react(chars.start, line.anim, line.emo, 1600);
+      toast(line.text);
+    } else if (h === chars.game) {
+      if (busy) return;
+      C.react(chars.game, line.anim, line.emo, 1600);
+      showBubble(line.text, 1500);
+      var b = document.getElementById("game-char").getBoundingClientRect();
+      C.burst(b.left + b.width / 2, b.top + b.height / 2, 10);
+    } else if (h === chars.result) {
+      C.react(chars.result, state.win ? "celebrate" : "droop", state.win ? "star" : "cry", 1400);
+      if (state.win) C.confettiRain(); else C.rainDrops();
+    }
+  }
+
+  function showHowto() {
+    els["sheet-title"].textContent = "玩法 · 专升本模拟器";
+    els["sheet-body"].innerHTML =
+      "<p>🎯 共 <b>10 个回合</b>，每回合 4 个选项，选 1 个推进。</p>" +
+      "<p>📊 每个选项会影响 <b>努力 / 心态 / 运气 / 资金</b> 四项属性，选项上直接标了变化。</p>" +
+      "<p>🎲 最后按「基础上岸率 10% + 属性修正」掷一次骰子，决定你是 <b>忘本</b> 还是 <b>忘专失败</b>。</p>" +
+      "<p>👆 点一点角色小专，会有惊喜反应；查分阶段记得深呼吸。</p>" +
+      "<p>🔊 右上角可以关音效/语音；BGM 是原创合成说唱风伴奏，也可以换成本地 Rap。</p>" +
+      "<p>📤 结果页可以生成战报图 / 分享文案，发给朋友看谁更忘本。</p>";
+    els.sheet.classList.remove("hidden");
+  }
+
+  /* ------------------------------------------------------------ 工具 */
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  /* ------------------------------------------------------- demo / 测试 */
+  function handleDemoOrAutotest() {
+    if (DEMO.get("static") === "1") document.body.classList.add("nofx");
+    if (DEMO.get("autotest") === "1") {
+      autotest = true;
+      setTimeout(runAutotest, 60);
+      return;
+    }
+    var demo = DEMO.get("demo");
+    if (!demo) return;
+    setTimeout(function () {
+      try {
+        if (demo === "start") return;
+        if (demo === "round" || demo === "reaction") {
+          startGame();
+          var n = Math.max(1, parseInt(DEMO.get("n") || "1", 10)) - 1;
+          // 预设：跳过之前的回合
+          for (var i = 0; i < n; i++) {
+            var r = D.rounds[i], o = r.options[Math.floor(Math.random() * 4)];
+            state.picks.push({ round: i, idx: 0, opt: o, emoji: o.emoji });
+            Object.keys(o.fx).forEach(function (k) { state.stats[k] = clamp(state.stats[k] + o.fx[k], 0, 100); });
+          }
+          renderRound(n);
+          updateStats(false);
+          if (demo === "reaction") {
+            var oi = parseInt(DEMO.get("o") || "0", 10);
+            setTimeout(function () { chooseOption(oi, els.options.children[oi]); }, 80);
+          }
+        } else if (demo === "loading") {
+          startGame();
+          state.stats = { effort: 72, mood: 61, luck: 55, money: 40 };
+          showLoading();
+        } else if (demo === "win" || demo === "lose") {
+          startGame();
+          state.stats = demo === "win" ? { effort: 92, mood: 84, luck: 88, money: 70 } : { effort: 41, mood: 38, luck: 33, money: 44 };
+          for (var i = 0; i < 10; i++) {
+            var r2 = D.rounds[i], o2 = r2.options[i % 4];
+            state.picks.push({ round: i, idx: i % 4, opt: o2, emoji: o2.emoji });
+          }
+          computeResult();
+          if (demo === "win") { state.win = true; state.chance = 23.7; state.roll = 11.2; }
+          else { state.win = false; state.chance = 6.4; state.roll = 28.9; }
+          showResult(state.win);
+          if (DEMO.get("testposter") === "1") {
+            setTimeout(function () {
+              try {
+                var cv = buildPoster();
+                document.body.dataset.poster = JSON.stringify({ ok: true, url: cv.toDataURL("image/png").length });
+              } catch (e) {
+                document.body.dataset.poster = JSON.stringify({ ok: false, error: String(e) });
+              }
+            }, 500);
+          }
+        }
+      } catch (err) {
+        console.error("demo error", err);
+        document.body.dataset.demoerror = String(err && err.message || err);
+      }
+    }, 80);
+  }
+
+  function runAutotest() {
+    try {
+      A.start();
+      startGame();
+      var steps = 0;
+      function loop() {
+        if (steps++ > 600) {
+          document.body.dataset.autotest = JSON.stringify({ ok: false, error: "timeout" });
+          return;
+        }
+        if (els.screens.result.classList.contains("active")) return; // 结果已出
+        if (els.screens.loading.classList.contains("active")) { setTimeout(loop, 100); return; }
+        if (!els["btn-next"].classList.contains("hidden")) {
+          els["btn-next"].click();
+          setTimeout(loop, 140);
+          return;
+        }
+        var btns = els.options.querySelectorAll(".option");
+        if (btns.length) {
+          var k = Math.floor(Math.random() * btns.length);
+          btns[k].click();
+          setTimeout(loop, 200);
+        } else setTimeout(loop, 120);
+      }
+      setTimeout(loop, 300);
+    } catch (e) {
+      document.body.dataset.autotest = JSON.stringify({ ok: false, error: String(e) });
+    }
+  }
+
+  window.__posterTest = buildPoster;
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+
+</script>
+</body>
+</html>
